@@ -50,4 +50,21 @@ router.patch('/:id/resolve', requireAuth, async (req, res) => {
   }
 });
 
+router.patch('/:id/status', requireAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['OPEN', 'RESOLVED'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    const { rows } = await pool.query(
+      'UPDATE violations SET status = $1 WHERE id = $2 RETURNING *',
+      [status, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(toViolation(rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
