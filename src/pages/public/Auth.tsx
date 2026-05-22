@@ -179,9 +179,7 @@ export const Login = () => {
                   </button>
                 </div>
               </div>
-              <div className="pt-1 pb-1 px-3 rounded-lg bg-white/[0.03] border border-white/8 text-[11px] text-slate-500">
-                Demo passwords are all <span className="text-slate-300 font-mono">password</span>
-              </div>
+
               <Button type="submit" className="w-full" disabled={loggingIn}>
                 {loggingIn ? 'Signing in…' : 'Sign In'}
               </Button>
