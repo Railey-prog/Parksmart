@@ -47,3 +47,4 @@ publicDir = "dist"
 
 [userenv.shared]
 NODE_ENV = "development"
+JWT_SECRET = "parksmart_jwt_secret_replit_2026"
