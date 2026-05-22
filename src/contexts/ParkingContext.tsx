@@ -51,7 +51,7 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setLoading(false);
       return;
     }
-    Promise.all([
+    Promise.allSettled([
       api.getZones(),
       api.getReservations(),
       api.getPermits(),
@@ -59,14 +59,12 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       api.getViolations(),
       api.getUsers()
     ]).then(([z, r, p, l, v, u]) => {
-      setZones(z);
-      setReservations(r);
-      setPermits(p);
-      setLogs(l);
-      setViolations(v);
-      setUsers(u);
-    }).catch((err) => {
-      console.error('Failed to load data:', err);
+      if (z.status === 'fulfilled') setZones(z.value); else console.error('Failed to load zones:', z.reason);
+      if (r.status === 'fulfilled') setReservations(r.value); else console.error('Failed to load reservations:', r.reason);
+      if (p.status === 'fulfilled') setPermits(p.value); else console.error('Failed to load permits:', p.reason);
+      if (l.status === 'fulfilled') setLogs(l.value); else console.error('Failed to load logs:', l.reason);
+      if (v.status === 'fulfilled') setViolations(v.value); else console.error('Failed to load violations:', v.reason);
+      if (u.status === 'fulfilled') setUsers(u.value); else console.error('Failed to load users:', u.reason);
     }).finally(() => setLoading(false));
   }, []);
 
