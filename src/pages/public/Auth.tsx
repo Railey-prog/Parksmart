@@ -173,7 +173,10 @@ export const Login = () => {
                 <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="glass-input w-full pl-10 pr-4" placeholder="••••••••" />
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} className="glass-input w-full pl-10 pr-10" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
