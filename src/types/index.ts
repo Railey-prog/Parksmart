@@ -37,7 +37,7 @@ export interface Reservation {
   zoneId: string;
   startTime: string;
   endTime: string;
-  status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
+  status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
 }
 
 export interface Permit {

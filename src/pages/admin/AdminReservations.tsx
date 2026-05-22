@@ -4,22 +4,24 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { StatCard } from '../../components/common/StatCard';
-import { Calendar, Clock, CheckCircle, XCircle, MapPin, User, Ban } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Filter = 'ALL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
+type Filter = 'ALL' | 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+  PENDING: 'warning',
   ACTIVE: 'success',
-  EXPIRED: 'warning',
+  EXPIRED: 'neutral',
   CANCELLED: 'danger',
   COMPLETED: 'info',
 };
 
 export const AdminReservations = () => {
-  const { reservations, zones, users, cancelReservation } = useParking();
-  const [filter, setFilter] = useState<Filter>('ALL');
+  const { reservations, zones, users, cancelReservation, approveReservation } = useParking();
+  const [filter, setFilter] = useState<Filter>('PENDING');
 
+  const pending = reservations.filter((r) => r.status === 'PENDING');
   const active = reservations.filter((r) => r.status === 'ACTIVE');
   const expired = reservations.filter((r) => r.status === 'EXPIRED');
   const cancelled = reservations.filter((r) => r.status === 'CANCELLED');
@@ -39,12 +41,17 @@ export const AdminReservations = () => {
     return `${mins}m`;
   };
 
+  const handleApprove = (id: string) => {
+    approveReservation(id);
+  };
+
   const handleCancel = (id: string) => {
     cancelReservation(id);
     toast.success('Reservation cancelled by admin');
   };
 
   const FILTERS: { key: Filter; label: string; count: number }[] = [
+    { key: 'PENDING', label: 'Pending', count: pending.length },
     { key: 'ALL', label: 'All', count: reservations.length },
     { key: 'ACTIVE', label: 'Active', count: active.length },
     { key: 'EXPIRED', label: 'Expired', count: expired.length },
@@ -61,11 +68,20 @@ export const AdminReservations = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard title="Pending Approval" value={pending.length} icon={<Clock className="w-6 h-6" />} className={pending.length > 0 ? 'border-amber-500/30' : ''} />
+        <StatCard title="Active Now" value={active.length} icon={<CheckCircle className="w-6 h-6" />} className={active.length > 0 ? 'border-emerald-500/30' : ''} />
         <StatCard title="Total" value={reservations.length} icon={<Calendar className="w-6 h-6" />} />
-        <StatCard title="Active Now" value={active.length} icon={<Clock className="w-6 h-6" />} className={active.length > 0 ? 'border-emerald-500/30' : ''} />
-        <StatCard title="Expired" value={expired.length} icon={<XCircle className="w-6 h-6" />} />
-        <StatCard title="Completed" value={completed.length} icon={<CheckCircle className="w-6 h-6" />} />
+        <StatCard title="Completed" value={completed.length} icon={<XCircle className="w-6 h-6" />} />
       </div>
+
+      {pending.length > 0 && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-200/80">
+          <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            {pending.length} reservation{pending.length > 1 ? 's are' : ' is'} awaiting your approval.
+          </span>
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-1 rounded-xl bg-black/20 border border-white/10 p-1 w-fit">
@@ -75,8 +91,9 @@ export const AdminReservations = () => {
             onClick={() => setFilter(key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               filter === key
-                ? key === 'ACTIVE' ? 'bg-emerald-700 text-white shadow'
-                : key === 'EXPIRED' ? 'bg-amber-700 text-white shadow'
+                ? key === 'PENDING' ? 'bg-amber-600 text-white shadow'
+                : key === 'ACTIVE' ? 'bg-emerald-700 text-white shadow'
+                : key === 'EXPIRED' ? 'bg-slate-600 text-white shadow'
                 : key === 'CANCELLED' ? 'bg-rose-700 text-white shadow'
                 : 'bg-indigo-600 text-white shadow'
                 : 'text-slate-400 hover:text-white'
@@ -144,14 +161,24 @@ export const AdminReservations = () => {
                         <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'}>{r.status}</Badge>
                       </td>
                       <td className="p-4">
-                        {r.status === 'ACTIVE' && (
-                          <button
-                            onClick={() => handleCancel(r.id)}
-                            className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition-colors font-medium"
-                          >
-                            <Ban className="w-3.5 h-3.5" /> Cancel
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {r.status === 'PENDING' && (
+                            <button
+                              onClick={() => handleApprove(r.id)}
+                              className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:bg-emerald-500/10 transition-colors font-medium"
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" /> Approve
+                            </button>
+                          )}
+                          {(r.status === 'PENDING' || r.status === 'ACTIVE') && (
+                            <button
+                              onClick={() => handleCancel(r.id)}
+                              className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition-colors font-medium"
+                            >
+                              <Ban className="w-3.5 h-3.5" /> Cancel
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

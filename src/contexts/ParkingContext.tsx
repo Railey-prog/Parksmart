@@ -15,6 +15,7 @@ interface ParkingContextType {
   reserveSlot: (userId: string, zoneId: string, slotId: string, durationMinutes: number) => void;
   cancelReservation: (reservationId: string) => void;
   updateSlotStatus: (zoneId: string, slotId: string, status: SlotStatus) => void;
+  approveReservation: (reservationId: string) => void;
   approvePermit: (permitId: string) => void;
   revokePermit: (permitId: string) => void;
   addLog: (log: Omit<LogEntry, 'id' | 'timestamp'>) => void;
@@ -109,12 +110,34 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         : z));
       addLogInternal({ type: 'SYSTEM', description: `Parking reserved – slot ${slotId}, zone ${zoneId}`, userId, severity: 'INFO' });
       addNotification({
-        userId, title: 'Reservation Confirmed',
-        message: `Your parking slot is reserved until ${new Date(res.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
-        type: 'SUCCESS', targetRole: 'USER'
+        userId, title: 'Reservation Submitted',
+        message: 'Your reservation is pending admin approval.',
+        type: 'INFO', targetRole: 'USER'
+      });
+      addNotification({
+        userId: 'system', title: 'New Reservation Request',
+        message: `A new parking reservation is awaiting your approval.`,
+        type: 'INFO', targetRole: 'ADMIN'
       });
     }).catch(() => toast.error('Failed to reserve slot'));
   }, [addNotification]);
+
+  const approveReservation = useCallback((reservationId: string) => {
+    const res = reservations.find((r) => r.id === reservationId);
+    if (!res) return;
+    setReservations((prev) => prev.map((r) => r.id === reservationId ? { ...r, status: 'ACTIVE' } : r));
+    setZones((zPrev) => zPrev.map((z) => z.id === res.zoneId
+      ? { ...z, slots: z.slots.map((s) => s.id === res.slotId ? { ...s, status: 'OCCUPIED' } : s) }
+      : z));
+    api.approveReservation(reservationId).catch(() => {});
+    addNotification({
+      userId: res.userId, title: 'Reservation Approved',
+      message: 'Your reservation has been approved.',
+      type: 'SUCCESS', targetRole: 'USER'
+    });
+    addLogInternal({ type: 'SYSTEM', description: `Reservation approved – slot ${res.slotId}, zone ${res.zoneId}`, userId: res.userId, severity: 'INFO' });
+    toast.success('Reservation approved');
+  }, [reservations, addNotification]);
 
   const cancelReservation = useCallback((reservationId: string) => {
     const res = reservations.find((r) => r.id === reservationId);
@@ -273,7 +296,7 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <ParkingContext.Provider value={{
       zones, reservations, permits, logs, violations, users, loading,
       reserveSlot, cancelReservation, updateSlotStatus,
-      approvePermit, revokePermit, addLog, reportViolation, resolveViolation,
+      approveReservation, approvePermit, revokePermit, addLog, reportViolation, resolveViolation,
       updateUserStatus, createUser, updateUser, deleteUser,
       createZone, updateZone, deleteZone, createSlot, deleteSlot,
       requestPermit, resetData, updateViolationStatus

@@ -5,7 +5,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { CountdownTimer } from '../../components/reservations/CountdownTimer';
-import { MapPin, Calendar, AlertCircle, Plus } from 'lucide-react';
+import { MapPin, Calendar, AlertCircle, Plus, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const UserDashboard = () => {
@@ -16,8 +16,13 @@ export const UserDashboard = () => {
   const activeReservation = reservations.find(
     (r) => r.userId === user?.id && r.status === 'ACTIVE'
   );
+  const pendingReservation = !activeReservation
+    ? reservations.find((r) => r.userId === user?.id && r.status === 'PENDING')
+    : null;
   const activeZone = activeReservation ? zones.find((z) => z.id === activeReservation.zoneId) : null;
   const activeSlot = activeZone ? activeZone.slots.find((s) => s.id === activeReservation?.slotId) : null;
+  const pendingZone = pendingReservation ? zones.find((z) => z.id === pendingReservation.zoneId) : null;
+  const pendingSlot = pendingZone ? pendingZone.slots.find((s) => s.id === pendingReservation?.slotId) : null;
 
   // Compute high-occupancy zones from real data
   const zoneAlerts = zones
@@ -64,6 +69,29 @@ export const UserDashboard = () => {
                 </Button>
                 <Button variant="secondary" onClick={() => navigate('/user/map')}>
                   View on Map
+                </Button>
+              </div>
+            </GlassCard>
+          ) : pendingReservation && pendingSlot && pendingZone ? (
+            <GlassCard className="border-amber-500/30 bg-amber-500/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+                <Clock className="w-32 h-32" />
+              </div>
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div>
+                  <Badge variant="warning" className="mb-2">Pending Approval</Badge>
+                  <h2 className="text-2xl font-bold text-white">{pendingSlot.name}</h2>
+                  <p className="text-slate-300 flex items-center gap-1 mt-1">
+                    <MapPin className="w-4 h-4" /> {pendingZone.name}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-amber-200/70 mb-4 relative z-10">
+                Your reservation is awaiting admin approval. You'll be notified once it's confirmed.
+              </p>
+              <div className="flex gap-3 relative z-10">
+                <Button variant="danger" onClick={() => cancelReservation(pendingReservation.id)}>
+                  Cancel Request
                 </Button>
               </div>
             </GlassCard>

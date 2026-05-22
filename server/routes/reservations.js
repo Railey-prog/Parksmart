@@ -30,14 +30,28 @@ router.post('/', requireAuth, async (req, res) => {
 
     await pool.query(
       `INSERT INTO reservations (id, user_id, slot_id, zone_id, start_time, end_time, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')`,
+       VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')`,
       [id, userId, slotId, zoneId, now, endTime]
     );
     await pool.query('UPDATE slots SET status = $1 WHERE id = $2', ['RESERVED', slotId]);
 
-    res.status(201).json({ id, userId, slotId, zoneId, startTime: now.toISOString(), endTime: endTime.toISOString(), status: 'ACTIVE' });
+    res.status(201).json({ id, userId, slotId, zoneId, startTime: now.toISOString(), endTime: endTime.toISOString(), status: 'PENDING' });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.patch('/:id/approve', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    const reservation = rows[0];
+    if (reservation.status !== 'PENDING') return res.status(400).json({ error: 'Reservation is not pending' });
+    await pool.query('UPDATE reservations SET status = $1 WHERE id = $2', ['ACTIVE', req.params.id]);
+    await pool.query('UPDATE slots SET status = $1 WHERE id = $2', ['OCCUPIED', reservation.slot_id]);
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });

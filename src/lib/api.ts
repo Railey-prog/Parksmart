@@ -53,6 +53,7 @@ export const api = {
   getReservations: () => request<any[]>('GET', '/reservations'),
   createReservation: (data: any) => request<any>('POST', '/reservations', data),
   cancelReservation: (id: string) => request<any>('PATCH', `/reservations/${id}/cancel`),
+  approveReservation: (id: string) => request<any>('PATCH', `/reservations/${id}/approve`),
   expireReservation: (id: string) => request<any>('PATCH', `/reservations/${id}/expire`),
 
   // Permits
