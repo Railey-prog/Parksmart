@@ -1,31 +1,9 @@
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-  createContext,
-  useContext } from
-'react';
-import {
-  Zone,
-  Slot,
-  Reservation,
-  Permit,
-  LogEntry,
-  Violation,
-  User,
-  SlotStatus } from
-'../types';
-import {
-  mockZones,
-  mockReservations,
-  mockPermits,
-  mockLogs,
-  mockViolations,
-  mockUsers } from
-'../data/mockData';
+import React, { useCallback, useEffect, useState, createContext, useContext } from 'react';
+import { Zone, Slot, Reservation, Permit, LogEntry, Violation, User, SlotStatus } from '../types';
 import { useNotifications } from './NotificationContext';
 import { toast } from 'sonner';
-import { loadFromStorage, saveToStorage, clearAllStorage } from '../lib/storage';
+import { api } from '../lib/api';
+
 interface ParkingContextType {
   zones: Zone[];
   reservations: Reservation[];
@@ -33,573 +11,269 @@ interface ParkingContextType {
   logs: LogEntry[];
   violations: Violation[];
   users: User[];
-  // Actions
-  reserveSlot: (
-  userId: string,
-  zoneId: string,
-  slotId: string,
-  durationMinutes: number)
-  => void;
+  loading: boolean;
+  reserveSlot: (userId: string, zoneId: string, slotId: string, durationMinutes: number) => void;
   cancelReservation: (reservationId: string) => void;
   updateSlotStatus: (zoneId: string, slotId: string, status: SlotStatus) => void;
   approvePermit: (permitId: string) => void;
   revokePermit: (permitId: string) => void;
   addLog: (log: Omit<LogEntry, 'id' | 'timestamp'>) => void;
-  reportViolation: (
-  violation: Omit<Violation, 'id' | 'timestamp' | 'status'>)
-  => void;
+  reportViolation: (violation: Omit<Violation, 'id' | 'timestamp' | 'status'>) => void;
   resolveViolation: (violationId: string) => void;
   updateUserStatus: (userId: string, status: 'APPROVED' | 'REJECTED') => void;
-  // New Admin Actions
   createUser: (user: Omit<User, 'id'>) => boolean;
   updateUser: (id: string, data: Partial<User>) => void;
   deleteUser: (id: string) => void;
   createZone: (zone: Omit<Zone, 'id' | 'slots'>) => void;
   updateZone: (id: string, data: Partial<Zone>) => void;
   deleteZone: (id: string) => void;
-  createSlot: (
-  zoneId: string,
-  slot: Omit<Slot, 'id' | 'zoneId' | 'status'>)
-  => void;
+  createSlot: (zoneId: string, slot: Omit<Slot, 'id' | 'zoneId' | 'status'>) => void;
   deleteSlot: (zoneId: string, slotId: string) => void;
   requestPermit: (userId: string, vehiclePlate: string, vehicleModel?: string) => void;
   resetData: () => void;
 }
-const ParkingContext = createContext<ParkingContextType | undefined>(undefined);
-export const ParkingProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [zones, setZones] = useState<Zone[]>(() =>
-  loadFromStorage('zones', mockZones)
-  );
-  const [reservations, setReservations] = useState<Reservation[]>(() =>
-  loadFromStorage('reservations', mockReservations)
-  );
-  const [permits, setPermits] = useState<Permit[]>(() =>
-  loadFromStorage('permits', mockPermits)
-  );
-  const [logs, setLogs] = useState<LogEntry[]>(() =>
-  loadFromStorage('logs', mockLogs)
-  );
-  const [violations, setViolations] = useState<Violation[]>(() =>
-  loadFromStorage('violations', mockViolations)
-  );
-  const [users, setUsers] = useState<User[]>(() =>
-  loadFromStorage('users', mockUsers)
-  );
-  const { addNotification } = useNotifications();
-  // Persist every state slice to localStorage when it changes
-  useEffect(() => { saveToStorage('zones', zones); }, [zones]);
-  useEffect(() => { saveToStorage('reservations', reservations); }, [reservations]);
-  useEffect(() => { saveToStorage('permits', permits); }, [permits]);
-  useEffect(() => { saveToStorage('logs', logs); }, [logs]);
-  useEffect(() => { saveToStorage('violations', violations); }, [violations]);
-  useEffect(() => { saveToStorage('users', users); }, [users]);
 
-  // Cross-tab sync: when another tab writes to localStorage (e.g. admin approves a permit),
-  // re-read the updated values into this tab's state so both tabs stay in sync.
+const ParkingContext = createContext<ParkingContextType | undefined>(undefined);
+
+export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [permits, setPermits] = useState<Permit[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const { addNotification } = useNotifications();
+
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (!e.key || !e.newValue) return;
-      try {
-        const value = JSON.parse(e.newValue);
-        if (e.key === 'parksmart_db_permits') setPermits(value);
-        else if (e.key === 'parksmart_db_zones') setZones(value);
-        else if (e.key === 'parksmart_db_reservations') setReservations(value);
-        else if (e.key === 'parksmart_db_logs') setLogs(value);
-        else if (e.key === 'parksmart_db_violations') setViolations(value);
-        else if (e.key === 'parksmart_db_users') setUsers(value);
-      } catch {
-        // ignore malformed entries
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (!localStorage.getItem('parksmart_token')) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      api.getZones(),
+      api.getReservations(),
+      api.getPermits(),
+      api.getLogs(),
+      api.getViolations(),
+      api.getUsers()
+    ]).then(([z, r, p, l, v, u]) => {
+      setZones(z);
+      setReservations(r);
+      setPermits(p);
+      setLogs(l);
+      setViolations(v);
+      setUsers(u);
+    }).catch((err) => {
+      console.error('Failed to load data:', err);
+    }).finally(() => setLoading(false));
   }, []);
-  // Simulate real-time updates and reservation expirations
+
+  // Reservation expiry check
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
-      // Check for expired reservations
       setReservations((prev) => {
         let changed = false;
         const updated = prev.map((res) => {
           if (res.status === 'ACTIVE' && new Date(res.endTime) <= now) {
             changed = true;
-            // Update slot status back to available
             setZones((zPrev) =>
-            zPrev.map((z) =>
-            z.id === res.zoneId ?
-            {
-              ...z,
-              slots: z.slots.map((s) =>
-              s.id === res.slotId ?
-              {
-                ...s,
-                status: 'AVAILABLE'
-              } :
-              s
-              )
-            } :
-            z
-            )
+              zPrev.map((z) => z.id === res.zoneId
+                ? { ...z, slots: z.slots.map((s) => s.id === res.slotId ? { ...s, status: 'AVAILABLE' } : s) }
+                : z)
             );
-            addNotification({
-              userId: res.userId,
-              title: 'Reservation Expired',
-              message: 'Your parking reservation has expired.',
-              type: 'WARNING',
-              targetRole: 'USER'
-            });
-            return {
-              ...res,
-              status: 'EXPIRED'
-            };
+            api.expireReservation(res.id).catch(() => {});
+            addNotification({ userId: res.userId, title: 'Reservation Expired', message: 'Your parking reservation has expired.', type: 'WARNING', targetRole: 'USER' });
+            return { ...res, status: 'EXPIRED' as const };
           }
           return res;
         });
         return changed ? updated : prev;
       });
-      // Randomly flip a slot status occasionally to simulate live activity (only for non-reserved slots)
-      if (Math.random() > 0.8) {
-        setZones((prev) => {
-          const newZones = [...prev];
-          const randomZoneIdx = Math.floor(Math.random() * newZones.length);
-          const zone = newZones[randomZoneIdx];
-          const randomSlotIdx = Math.floor(Math.random() * zone.slots.length);
-          const slot = zone.slots[randomSlotIdx];
-          if (slot.status === 'AVAILABLE' || slot.status === 'OCCUPIED') {
-            const newStatus =
-            slot.status === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
-            // Log the entry/exit
-            if (newStatus === 'OCCUPIED') {
-              addLogInternal({
-                type: 'ENTRY',
-                description: `Vehicle entered ${zone.name} (${slot.name})`,
-                severity: 'INFO'
-              });
-            } else {
-              addLogInternal({
-                type: 'EXIT',
-                description: `Vehicle exited ${zone.name} (${slot.name})`,
-                severity: 'INFO'
-              });
-            }
-            zone.slots[randomSlotIdx] = {
-              ...slot,
-              status: newStatus
-            };
-          }
-          return newZones;
-        });
-      }
-    }, 5000); // Check every 5 seconds
+    }, 10000);
     return () => clearInterval(interval);
   }, [addNotification]);
+
   const addLogInternal = (log: Omit<LogEntry, 'id' | 'timestamp'>) => {
-    const newLog: LogEntry = {
-      ...log,
-      id: `l_${Date.now()}`,
-      timestamp: new Date().toISOString()
-    };
+    const newLog: LogEntry = { ...log, id: `l_${Date.now()}`, timestamp: new Date().toISOString() };
     setLogs((prev) => [newLog, ...prev]);
+    api.addLog(log).catch(() => {});
   };
-  const reserveSlot = useCallback(
-    (
-    userId: string,
-    zoneId: string,
-    slotId: string,
-    durationMinutes: number) =>
-    {
-      const now = new Date();
-      const endTime = new Date(now.getTime() + durationMinutes * 60000);
-      const newReservation: Reservation = {
-        id: `r_${Date.now()}`,
-        userId,
-        zoneId,
-        slotId,
-        startTime: now.toISOString(),
-        endTime: endTime.toISOString(),
-        status: 'ACTIVE'
-      };
-      setReservations((prev) => [newReservation, ...prev]);
-      setZones((prev) =>
-      prev.map((z) =>
-      z.id === zoneId ?
-      {
-        ...z,
-        slots: z.slots.map((s) =>
-        s.id === slotId ?
-        {
-          ...s,
-          status: 'RESERVED'
-        } :
-        s
-        )
-      } :
-      z
-      )
-      );
-      addLogInternal({
-        type: 'SYSTEM',
-        description: `Slot ${slotId} reserved by user ${userId}`,
-        userId,
-        severity: 'INFO'
-      });
+
+  const reserveSlot = useCallback((userId: string, zoneId: string, slotId: string, durationMinutes: number) => {
+    api.createReservation({ userId, zoneId, slotId, durationMinutes }).then((res) => {
+      setReservations((prev) => [res, ...prev]);
+      setZones((prev) => prev.map((z) => z.id === zoneId
+        ? { ...z, slots: z.slots.map((s) => s.id === slotId ? { ...s, status: 'RESERVED' } : s) }
+        : z));
+      addLogInternal({ type: 'SYSTEM', description: `Slot ${slotId} reserved by user ${userId}`, userId, severity: 'INFO' });
       addNotification({
-        userId,
-        title: 'Reservation Confirmed',
-        message: `Your parking slot is reserved until ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Check your dashboard for details.`,
-        type: 'SUCCESS',
-        targetRole: 'USER'
+        userId, title: 'Reservation Confirmed',
+        message: `Your parking slot is reserved until ${new Date(res.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+        type: 'SUCCESS', targetRole: 'USER'
       });
-    },
-    [addNotification]
-  );
+    }).catch(() => toast.error('Failed to reserve slot'));
+  }, [addNotification]);
+
   const cancelReservation = useCallback((reservationId: string) => {
-    setReservations((prev) => {
-      const res = prev.find((r) => r.id === reservationId);
-      if (res && res.status === 'ACTIVE') {
-        // Free up the slot
-        setZones((zPrev) =>
-        zPrev.map((z) =>
-        z.id === res.zoneId ?
-        {
-          ...z,
-          slots: z.slots.map((s) =>
-          s.id === res.slotId ?
-          {
-            ...s,
-            status: 'AVAILABLE'
-          } :
-          s
-          )
-        } :
-        z
-        )
-        );
-        toast.success('Reservation Cancelled');
-        addNotification({
-          userId: res.userId,
-          title: 'Reservation Cancelled',
-          message: 'Your parking reservation has been cancelled and the slot is now available.',
-          type: 'WARNING',
-          targetRole: 'USER'
-        });
-        return prev.map((r) =>
-        r.id === reservationId ?
-        {
-          ...r,
-          status: 'CANCELLED'
-        } :
-        r
-        );
-      }
-      return prev;
-    });
-  }, [addNotification]);
-  const updateSlotStatus = useCallback(
-    (zoneId: string, slotId: string, status: SlotStatus) => {
-      setZones((prev) =>
-      prev.map((z) =>
-      z.id === zoneId ?
-      {
-        ...z,
-        slots: z.slots.map((s) =>
-        s.id === slotId ?
-        {
-          ...s,
-          status
-        } :
-        s
-        )
-      } :
-      z
-      )
-      );
-      toast.success(`Slot status updated to ${status}`);
-    },
-    []
-  );
+    const res = reservations.find((r) => r.id === reservationId);
+    if (!res) return;
+    setReservations((prev) => prev.map((r) => r.id === reservationId ? { ...r, status: 'CANCELLED' } : r));
+    if (res.status === 'ACTIVE') {
+      setZones((zPrev) => zPrev.map((z) => z.id === res.zoneId
+        ? { ...z, slots: z.slots.map((s) => s.id === res.slotId ? { ...s, status: 'AVAILABLE' } : s) }
+        : z));
+    }
+    api.cancelReservation(reservationId).catch(() => {});
+    toast.success('Reservation Cancelled');
+    addNotification({ userId: res.userId, title: 'Reservation Cancelled', message: 'Your parking reservation has been cancelled.', type: 'WARNING', targetRole: 'USER' });
+  }, [reservations, addNotification]);
+
+  const updateSlotStatus = useCallback((zoneId: string, slotId: string, status: SlotStatus) => {
+    setZones((prev) => prev.map((z) => z.id === zoneId
+      ? { ...z, slots: z.slots.map((s) => s.id === slotId ? { ...s, status } : s) }
+      : z));
+    api.updateSlotStatus(slotId, status).catch(() => {});
+    toast.success(`Slot status updated to ${status}`);
+  }, []);
+
   const approvePermit = useCallback((permitId: string) => {
-    setPermits((prev) => {
-      const permit = prev.find((p) => p.id === permitId);
-      if (permit) {
-        addNotification({
-          userId: permit.userId,
-          title: 'Permit Approved',
-          message: `Your parking permit (${permit.permitNumber}) has been approved and is now active.`,
-          type: 'SUCCESS',
-          targetRole: 'USER'
-        });
-      }
-      return prev.map((p) => p.id === permitId ? { ...p, status: 'ACTIVE' } : p);
-    });
+    const permit = permits.find((p) => p.id === permitId);
+    setPermits((prev) => prev.map((p) => p.id === permitId ? { ...p, status: 'ACTIVE' } : p));
+    api.approvePermit(permitId).catch(() => {});
+    if (permit) addNotification({ userId: permit.userId, title: 'Permit Approved', message: `Your parking permit (${permit.permitNumber}) has been approved.`, type: 'SUCCESS', targetRole: 'USER' });
     toast.success('Permit approved');
-  }, [addNotification]);
+  }, [permits, addNotification]);
+
   const revokePermit = useCallback((permitId: string) => {
-    setPermits((prev) => {
-      const permit = prev.find((p) => p.id === permitId);
-      if (permit) {
-        addNotification({
-          userId: permit.userId,
-          title: 'Permit Revoked',
-          message: `Your parking permit (${permit.permitNumber}) has been revoked. Contact the admin for more information.`,
-          type: 'ERROR',
-          targetRole: 'USER'
-        });
-      }
-      return prev.map((p) => p.id === permitId ? { ...p, status: 'REVOKED' } : p);
-    });
+    const permit = permits.find((p) => p.id === permitId);
+    setPermits((prev) => prev.map((p) => p.id === permitId ? { ...p, status: 'REVOKED' } : p));
+    api.revokePermit(permitId).catch(() => {});
+    if (permit) addNotification({ userId: permit.userId, title: 'Permit Revoked', message: `Your permit (${permit.permitNumber}) has been revoked.`, type: 'ERROR', targetRole: 'USER' });
     toast.error('Permit revoked');
-  }, [addNotification]);
+  }, [permits, addNotification]);
+
   const addLog = useCallback((log: Omit<LogEntry, 'id' | 'timestamp'>) => {
     addLogInternal(log);
   }, []);
-  const reportViolation = useCallback(
-    (violation: Omit<Violation, 'id' | 'timestamp' | 'status'>) => {
-      const newViolation: Violation = {
-        ...violation,
-        id: `v_${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        status: 'OPEN'
-      };
-      setViolations((prev) => [newViolation, ...prev]);
+
+  const reportViolation = useCallback((violation: Omit<Violation, 'id' | 'timestamp' | 'status'>) => {
+    api.reportViolation(violation).then((v) => {
+      setViolations((prev) => [v, ...prev]);
       toast.success('Violation reported successfully');
-      addNotification({
-        userId: 'system',
-        title: 'Violation Reported',
-        message: `A parking violation has been filed at ${violation.location} for vehicle ${violation.vehiclePlate}.`,
-        type: 'WARNING',
-        targetRole: 'ADMIN'
-      });
-    },
-    [addNotification]
-  );
+      addNotification({ userId: 'system', title: 'Violation Reported', message: `A parking violation at ${violation.location} for vehicle ${violation.vehiclePlate}.`, type: 'WARNING', targetRole: 'ADMIN' });
+    }).catch(() => toast.error('Failed to report violation'));
+  }, [addNotification]);
+
   const resolveViolation = useCallback((violationId: string) => {
-    setViolations((prev) =>
-    prev.map((v) =>
-    v.id === violationId ?
-    {
-      ...v,
-      status: 'RESOLVED'
-    } :
-    v
-    )
-    );
+    setViolations((prev) => prev.map((v) => v.id === violationId ? { ...v, status: 'RESOLVED' } : v));
+    api.resolveViolation(violationId).catch(() => {});
     toast.success('Violation marked as resolved');
   }, []);
-  const updateUserStatus = useCallback(
-    (userId: string, status: 'APPROVED' | 'REJECTED') => {
-      setUsers((prev) =>
-      prev.map((u) =>
-      u.id === userId ?
-      {
-        ...u,
-        status
-      } :
-      u
-      )
-      );
-      toast.success(`User status updated to ${status}`);
-    },
-    []
-  );
-  const createUser = useCallback((user: Omit<User, 'id'>) => {
-    let created = false;
-    setUsers((prev) => {
-      // prevent duplicate email or name
-      if (prev.some((u) => u.email === user.email)) {
-        toast.error('A user with that email already exists');
-        return prev;
-      }
-      if (prev.some((u) => u.name === user.name)) {
-        toast.error('A user with that name already exists');
-        return prev;
-      }
-      const newUser: User = {
-        ...user,
-        id: `u_${Date.now()}`
-      };
-      created = true;
+
+  const updateUserStatus = useCallback((userId: string, status: 'APPROVED' | 'REJECTED') => {
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status } : u));
+    api.updateUserStatus(userId, status).catch(() => {});
+    toast.success(`User status updated to ${status}`);
+  }, []);
+
+  const createUser = useCallback((user: Omit<User, 'id'>): boolean => {
+    if (users.some((u) => u.email === user.email)) { toast.error('A user with that email already exists'); return false; }
+    if (users.some((u) => u.name === user.name)) { toast.error('A user with that name already exists'); return false; }
+    api.createUser({ ...user, password: 'password' }).then((newUser) => {
+      setUsers((prev) => [newUser, ...prev]);
       toast.success('User created successfully');
-      return [newUser, ...prev];
-    });
-    return created;
-  }, []);
+    }).catch(() => toast.error('Failed to create user'));
+    return true;
+  }, [users]);
+
   const updateUser = useCallback((id: string, data: Partial<User>) => {
-    setUsers((prev) => {
-      const userToUpdate = prev.find((u) => u.id === id);
-      if (userToUpdate?.role === 'ADMIN') {
-        toast.error('Admin accounts cannot be edited');
-        return prev;
-      }
-      // prevent duplicates when updating
-      if (data.email && prev.some((u) => u.email === data.email && u.id !== id)) {
-        toast.error('Email already in use');
-        return prev;
-      }
-      if (data.name && prev.some((u) => u.name === data.name && u.id !== id)) {
-        toast.error('Name already in use');
-        return prev;
-      }
-      toast.success('User updated successfully');
-      return prev.map((u) =>
-      u.id === id ?
-      {
-        ...u,
-        ...data
-      } :
-      u
-      );
-    });
-  }, []);
+    const target = users.find((u) => u.id === id);
+    if (target?.role === 'ADMIN') { toast.error('Admin accounts cannot be edited'); return; }
+    if (data.email && users.some((u) => u.email === data.email && u.id !== id)) { toast.error('Email already in use'); return; }
+    if (data.name && users.some((u) => u.name === data.name && u.id !== id)) { toast.error('Name already in use'); return; }
+    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, ...data } : u));
+    api.updateUser(id, data).catch(() => {});
+    toast.success('User updated successfully');
+  }, [users]);
+
   const deleteUser = useCallback((id: string) => {
-    setUsers((prev) => {
-      const userToDelete = prev.find((u) => u.id === id);
-      if (userToDelete?.role === 'ADMIN') {
-        toast.error('Admin accounts cannot be deleted');
-        return prev;
-      }
-      toast.success('User deleted');
-      return prev.filter((u) => u.id !== id);
-    });
-  }, []);
+    const target = users.find((u) => u.id === id);
+    if (target?.role === 'ADMIN') { toast.error('Admin accounts cannot be deleted'); return; }
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+    api.deleteUser(id).catch(() => {});
+    toast.success('User deleted');
+  }, [users]);
+
   const createZone = useCallback((zone: Omit<Zone, 'id' | 'slots'>) => {
-    const newZone: Zone = {
-      ...zone,
-      id: `z_${Date.now()}`,
-      slots: []
-    };
-    setZones((prev) => [...prev, newZone]);
-    toast.success('Zone created successfully');
+    api.createZone(zone).then((newZone) => {
+      setZones((prev) => [...prev, newZone]);
+      toast.success('Zone created successfully');
+    }).catch(() => toast.error('Failed to create zone'));
   }, []);
+
   const updateZone = useCallback((id: string, data: Partial<Zone>) => {
-    setZones((prev) =>
-    prev.map((z) =>
-    z.id === id ?
-    {
-      ...z,
-      ...data
-    } :
-    z
-    )
-    );
+    setZones((prev) => prev.map((z) => z.id === id ? { ...z, ...data } : z));
+    api.updateZone(id, data).catch(() => {});
     toast.success('Zone updated successfully');
   }, []);
+
   const deleteZone = useCallback((id: string) => {
     setZones((prev) => prev.filter((z) => z.id !== id));
+    api.deleteZone(id).catch(() => {});
     toast.success('Zone deleted');
   }, []);
-  const createSlot = useCallback(
-    (zoneId: string, slot: Omit<Slot, 'id' | 'zoneId' | 'status'>) => {
-      const newSlot: Slot = {
-        ...slot,
-        id: `s_${Date.now()}`,
-        zoneId,
-        status: 'AVAILABLE'
-      };
-      setZones((prev) =>
-      prev.map((z) =>
-      z.id === zoneId ?
-      {
-        ...z,
-        slots: [...z.slots, newSlot]
-      } :
-      z
-      )
-      );
+
+  const createSlot = useCallback((zoneId: string, slot: Omit<Slot, 'id' | 'zoneId' | 'status'>) => {
+    api.createSlot(zoneId, slot).then((newSlot) => {
+      setZones((prev) => prev.map((z) => z.id === zoneId ? { ...z, slots: [...z.slots, newSlot] } : z));
       toast.success('Slot added successfully');
-    },
-    []
-  );
+    }).catch(() => toast.error('Failed to add slot'));
+  }, []);
+
   const deleteSlot = useCallback((zoneId: string, slotId: string) => {
-    setZones((prev) =>
-    prev.map((z) =>
-    z.id === zoneId ?
-    {
-      ...z,
-      slots: z.slots.filter((s) => s.id !== slotId)
-    } :
-    z
-    )
-    );
+    setZones((prev) => prev.map((z) => z.id === zoneId ? { ...z, slots: z.slots.filter((s) => s.id !== slotId) } : z));
+    api.deleteSlot(slotId).catch(() => {});
     toast.success('Slot deleted');
   }, []);
-  const requestPermit = useCallback((userId: string, vehiclePlate: string, vehicleModel?: string) => {
-    setPermits((prev) => {
-      if (prev.some((p) => p.userId === userId && (p.status === 'ACTIVE' || p.status === 'PENDING'))) {
-        toast.error('You already have an active or pending permit');
-        return prev;
-      }
-      const newPermit: Permit = {
-        id: `p_${Date.now()}`,
-        userId,
-        permitNumber: `PRM-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
-        vehiclePlate,
-        issueDate: new Date().toISOString(),
-        expiryDate: new Date(new Date().getFullYear(), 11, 31, 23, 59, 59).toISOString(),
-        status: 'PENDING'
-      };
-      toast.success('Permit application submitted for admin review');
-      addNotification({
-        userId: 'system',
-        title: 'New Permit Application',
-        message: `A user has submitted a permit application for vehicle ${vehiclePlate}. Review it in the Permits section.`,
-        type: 'INFO',
-        targetRole: 'ADMIN'
-      });
-      return [...prev, newPermit];
-    });
-  }, [addNotification]);
-  const resetData = useCallback(() => {
-    clearAllStorage();
-    setZones(mockZones);
-    setReservations(mockReservations);
-    setPermits(mockPermits);
-    setLogs(mockLogs);
-    setViolations(mockViolations);
-    setUsers(mockUsers);
-    toast.success('Demo data reset to defaults');
-  }, []);
-  return (
-    <ParkingContext.Provider
-      value={{
-        zones,
-        reservations,
-        permits,
-        logs,
-        violations,
-        users,
-        reserveSlot,
-        cancelReservation,
-        updateSlotStatus,
-        approvePermit,
-        revokePermit,
-        addLog,
-        reportViolation,
-        resolveViolation,
-        updateUserStatus,
-        createUser,
-        updateUser,
-        deleteUser,
-        createZone,
-        updateZone,
-        deleteZone,
-        createSlot,
-        deleteSlot,
-        requestPermit,
-        resetData
-      }}>
-      
-      {children}
-    </ParkingContext.Provider>);
 
+  const requestPermit = useCallback((userId: string, vehiclePlate: string) => {
+    if (permits.some((p) => p.userId === userId && (p.status === 'ACTIVE' || p.status === 'PENDING'))) {
+      toast.error('You already have an active or pending permit');
+      return;
+    }
+    api.requestPermit({ userId, vehiclePlate }).then((newPermit) => {
+      setPermits((prev) => [...prev, newPermit]);
+      toast.success('Permit application submitted for admin review');
+      addNotification({ userId: 'system', title: 'New Permit Application', message: `A user submitted a permit application for vehicle ${vehiclePlate}.`, type: 'INFO', targetRole: 'ADMIN' });
+    }).catch((err) => {
+      if (err.code === 'PERMIT_EXISTS') toast.error('You already have an active or pending permit');
+      else toast.error('Failed to submit permit application');
+    });
+  }, [permits, addNotification]);
+
+  const resetData = useCallback(() => {
+    toast.info('Reload the page to re-seed data from the database.');
+  }, []);
+
+  return (
+    <ParkingContext.Provider value={{
+      zones, reservations, permits, logs, violations, users, loading,
+      reserveSlot, cancelReservation, updateSlotStatus,
+      approvePermit, revokePermit, addLog, reportViolation, resolveViolation,
+      updateUserStatus, createUser, updateUser, deleteUser,
+      createZone, updateZone, deleteZone, createSlot, deleteSlot,
+      requestPermit, resetData
+    }}>
+      {children}
+    </ParkingContext.Provider>
+  );
 };
+
 export const useParking = () => {
   const context = useContext(ParkingContext);
-  if (context === undefined) {
-    throw new Error('useParking must be used within a ParkingProvider');
-  }
+  if (context === undefined) throw new Error('useParking must be used within a ParkingProvider');
   return context;
 };

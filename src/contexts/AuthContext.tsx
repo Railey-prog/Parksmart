@@ -1,13 +1,12 @@
 import React, { useEffect, useState, createContext, useContext } from 'react';
 import { User, Role } from '../types';
-import { mockUsers } from '../data/mockData';
-import { loadFromStorage, saveToStorage } from '../lib/storage';
+import { api } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, role?: Role) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (userData: Partial<User>) => void;
+  register: (userData: { name: string; email: string; password: string; role: Role; vehiclePlate?: string; vehicleModel?: string }) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -16,74 +15,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const storedUser = localStorage.getItem('parksmart_user');
-      if (!storedUser) return null;
-      const parsed = JSON.parse(storedUser) as User;
+      const stored = localStorage.getItem('parksmart_user');
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as User;
       if (parsed.status === 'PENDING' || parsed.status === 'REJECTED') return null;
       return parsed;
-    } catch (e) {
-      console.error('Failed to parse stored user');
+    } catch {
       return null;
     }
   });
 
-  const login = (email: string, role?: Role) => {
-    let foundUser: User | undefined = mockUsers.find((u) => u.email === email);
-    if (!foundUser) {
-      const persistedUsers = loadFromStorage<User[]>('users', mockUsers);
-      foundUser = persistedUsers.find((u) => u.email === email);
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      const { token, user: u } = await api.login(email, password);
+      localStorage.setItem('parksmart_token', token);
+      localStorage.setItem('parksmart_user', JSON.stringify(u));
+      setUser(u);
+    } catch (err: any) {
+      const code = err.code || err.message;
+      throw new Error(code);
     }
-    if (!foundUser && role) {
-      foundUser = mockUsers.find((u) => u.role === role);
-    }
-    if (!foundUser) {
-      throw new Error('NOT_FOUND');
-    }
-    if (foundUser.status === 'PENDING') {
-      throw new Error('PENDING');
-    }
-    if (foundUser.status === 'REJECTED') {
-      throw new Error('REJECTED');
-    }
-    setUser(foundUser);
-    localStorage.setItem('parksmart_user', JSON.stringify(foundUser));
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('parksmart_token');
     localStorage.removeItem('parksmart_user');
   };
 
-  const register = (userData: Partial<User>) => {
-    const newUser: User = {
-      id: `u_${Date.now()}`,
-      name: userData.name || 'New User',
-      email: userData.email || '',
-      role: userData.role || 'USER',
-      status: 'PENDING',
-      vehiclePlate: userData.vehiclePlate,
-      vehicleModel: userData.vehicleModel
-    };
-
-    const existingUsers = loadFromStorage<User[]>('users', mockUsers);
-    const emailExists = existingUsers.some((u) => u.email === newUser.email) ||
-      mockUsers.some((u) => u.email === newUser.email);
-    if (emailExists) {
-      throw new Error('EMAIL_EXISTS');
+  const register = async (userData: {
+    name: string; email: string; password: string; role: Role;
+    vehiclePlate?: string; vehicleModel?: string;
+  }): Promise<void> => {
+    try {
+      await api.register({
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
+        vehiclePlate: userData.vehiclePlate,
+        vehicleModel: userData.vehicleModel
+      });
+    } catch (err: any) {
+      throw new Error(err.code || err.message);
     }
-
-    saveToStorage('users', [...existingUsers, newUser]);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        register,
-        isAuthenticated: !!user
-      }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
@@ -91,8 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
