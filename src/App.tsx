@@ -14,12 +14,11 @@ import { Landing } from './pages/public/Landing';
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsers } from './pages/admin/AdminUsers';
-import { AdminZones } from './pages/admin/AdminZones';
+import { AdminParking } from './pages/admin/AdminParking';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 import { AdminPermits } from './pages/admin/AdminPermits';
 import { AdminLogs } from './pages/admin/AdminLogs';
 import { AdminViolations } from './pages/admin/AdminViolations';
-import { AdminReservations } from './pages/admin/AdminReservations';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
 // User Pages
 import { UserDashboard } from './pages/user/UserDashboard';
@@ -97,10 +96,11 @@ const AppRoutes = () => {
               <Routes>
                 <Route path="/" element={<AdminDashboard />} />
                 <Route path="/users" element={<AdminUsers />} />
-                <Route path="/zones" element={<AdminZones />} />
+                <Route path="/parking" element={<AdminParking />} />
+                <Route path="/zones" element={<Navigate to="/admin/parking" replace />} />
+                <Route path="/reservations" element={<Navigate to="/admin/parking" replace />} />
                 <Route path="/analytics" element={<AdminAnalytics />} />
                 <Route path="/permits" element={<AdminPermits />} />
-                <Route path="/reservations" element={<AdminReservations />} />
                 <Route path="/logs" element={<AdminLogs />} />
                 <Route path="/violations" element={<AdminViolations />} />
                 <Route path="/notifications" element={<AdminNotifications />} />
