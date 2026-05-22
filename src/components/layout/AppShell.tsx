@@ -58,85 +58,19 @@ export const AppShell: React.FC<{
           icon: <MapPin className="w-5 h-5" />
         },
         {
-          label: 'Analytics',
-          path: '/admin/analytics',
-          icon: <BarChart3 className="w-5 h-5" />
-        },
-        {
           label: 'Permits',
           path: '/admin/permits',
           icon: <ShieldCheck className="w-5 h-5" />
         },
         {
-          label: 'System Logs',
+          label: 'Parking Activity',
           path: '/admin/logs',
           icon: <FileText className="w-5 h-5" />
         },
         {
-          label: 'Notifications',
-          path: '/admin/notifications',
-          icon: <Bell className="w-5 h-5" />
-        }];
-
-      case 'USER':
-        return [
-        {
-          label: 'Dashboard',
-          path: '/user',
-          icon: <LayoutDashboard className="w-5 h-5" />
-        },
-        {
-          label: 'Parking Map',
-          path: '/user/map',
-          icon: <Map className="w-5 h-5" />
-        },
-        {
-          label: 'Reservations',
-          path: '/user/reservations',
-          icon: <Calendar className="w-5 h-5" />
-        },
-        {
-          label: 'My Permit',
-          path: '/user/permit',
-          icon: <CreditCard className="w-5 h-5" />
-        },
-        {
-          label: 'History',
-          path: '/user/history',
-          icon: <Clock className="w-5 h-5" />
-        },
-        {
-          label: 'Profile',
-          path: '/user/profile',
-          icon: <UserIcon className="w-5 h-5" />
-        }];
-
-      case 'SECURITY':
-        return [
-        {
-          label: 'Dashboard',
-          path: '/security',
-          icon: <LayoutDashboard className="w-5 h-5" />
-        },
-        {
-          label: 'Verify Permit',
-          path: '/security/verify',
-          icon: <ShieldCheck className="w-5 h-5" />
-        },
-        {
-          label: 'Live Map',
-          path: '/security/map',
-          icon: <Map className="w-5 h-5" />
-        },
-        {
-          label: 'Entry/Exit Log',
-          path: '/security/logs',
-          icon: <FileText className="w-5 h-5" />
-        },
-        {
-          label: 'Violations',
-          path: '/security/violations',
-          icon: <AlertTriangle className="w-5 h-5" />
+          label: 'Reports & Stats',
+          path: '/admin/analytics',
+          icon: <BarChart3 className="w-5 h-5" />
         }];
 
       default:
