@@ -132,6 +132,9 @@ export const AdminUsers = () => {
       </GlassCard>
 
       <GlassCard className="p-0 overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/10 text-slate-400 text-sm">
+          Showing <span className="text-white font-semibold">{visibleUsers.length}</span> account{visibleUsers.length !== 1 ? 's' : ''} (from database)
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-white/5 border-b border-white/10 text-slate-300">
@@ -144,6 +147,11 @@ export const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
+              {visibleUsers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">No accounts match the current filters.</td>
+                </tr>
+              )}
               {visibleUsers.map((u) =>
               <tr key={u.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4 font-medium text-white">{u.name}</td>
