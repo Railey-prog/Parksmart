@@ -7,10 +7,12 @@ import { MapPin, Info } from 'lucide-react';
 interface ParkingMapProps {
   onSlotClick?: (slot: Slot, zone: Zone) => void;
   interactive?: boolean;
+  dimmed?: boolean;
 }
 export const ParkingMap: React.FC<ParkingMapProps> = ({
   onSlotClick,
-  interactive = true
+  interactive = true,
+  dimmed = false,
 }) => {
   const { zones } = useParking();
   const [selectedZoneId, setSelectedZoneId] = useState<string>(
@@ -23,7 +25,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   ).length;
   const totalCount = selectedZone.slots.length;
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${dimmed ? 'opacity-50 pointer-events-none select-none' : ''}`}>
       {/* Zone Selector */}
       <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
         {zones.map((zone) =>
