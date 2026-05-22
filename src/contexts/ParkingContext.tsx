@@ -89,24 +89,33 @@ export const ParkingProvider: React.FC<{
   );
   const { addNotification } = useNotifications();
   // Persist every state slice to localStorage when it changes
+  useEffect(() => { saveToStorage('zones', zones); }, [zones]);
+  useEffect(() => { saveToStorage('reservations', reservations); }, [reservations]);
+  useEffect(() => { saveToStorage('permits', permits); }, [permits]);
+  useEffect(() => { saveToStorage('logs', logs); }, [logs]);
+  useEffect(() => { saveToStorage('violations', violations); }, [violations]);
+  useEffect(() => { saveToStorage('users', users); }, [users]);
+
+  // Cross-tab sync: when another tab writes to localStorage (e.g. admin approves a permit),
+  // re-read the updated values into this tab's state so both tabs stay in sync.
   useEffect(() => {
-    saveToStorage('zones', zones);
-  }, [zones]);
-  useEffect(() => {
-    saveToStorage('reservations', reservations);
-  }, [reservations]);
-  useEffect(() => {
-    saveToStorage('permits', permits);
-  }, [permits]);
-  useEffect(() => {
-    saveToStorage('logs', logs);
-  }, [logs]);
-  useEffect(() => {
-    saveToStorage('violations', violations);
-  }, [violations]);
-  useEffect(() => {
-    saveToStorage('users', users);
-  }, [users]);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || !e.newValue) return;
+      try {
+        const value = JSON.parse(e.newValue);
+        if (e.key === 'parksmart_db_permits') setPermits(value);
+        else if (e.key === 'parksmart_db_zones') setZones(value);
+        else if (e.key === 'parksmart_db_reservations') setReservations(value);
+        else if (e.key === 'parksmart_db_logs') setLogs(value);
+        else if (e.key === 'parksmart_db_violations') setViolations(value);
+        else if (e.key === 'parksmart_db_users') setUsers(value);
+      } catch {
+        // ignore malformed entries
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   // Simulate real-time updates and reservation expirations
   useEffect(() => {
     const interval = setInterval(() => {
