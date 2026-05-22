@@ -78,4 +78,5 @@ export interface Notification {
   timestamp: string;
   read: boolean;
   type: 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR';
+  targetRole: 'ADMIN' | 'USER' | 'SECURITY' | 'ALL';
 }

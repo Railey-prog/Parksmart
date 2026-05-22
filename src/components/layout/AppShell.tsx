@@ -7,7 +7,6 @@ import {
   Map,
   Calendar,
   CreditCard,
-  Clock,
   User as UserIcon,
   Users,
   MapPin,
@@ -18,66 +17,159 @@ import {
   LogOut,
   Menu,
   X,
-  AlertTriangle } from
-'lucide-react';
+  AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { Badge } from '../common/Badge';
+
 interface NavItem {
   label: string;
   path: string;
   icon: React.ReactNode;
 }
-export const AppShell: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
+
+export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
-  const { unreadCount, notifications, markAsRead } = useNotifications();
+  const { getNotificationsForRole, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
   if (!user) return <>{children}</>;
+
+  const roleNotifications = getNotificationsForRole(user.role);
+  const roleUnreadCount = unreadCount(user.role);
+
   const getNavItems = (): NavItem[] => {
     switch (user.role) {
       case 'ADMIN':
         return [
-        { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
-        { label: 'Users', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
-        { label: 'Zones & Slots', path: '/admin/zones', icon: <MapPin className="w-5 h-5" /> },
-        { label: 'Permits', path: '/admin/permits', icon: <ShieldCheck className="w-5 h-5" /> },
-        { label: 'Reservations', path: '/admin/reservations', icon: <Calendar className="w-5 h-5" /> },
-        { label: 'Parking Activity', path: '/admin/logs', icon: <FileText className="w-5 h-5" /> },
-        { label: 'Violations', path: '/admin/violations', icon: <AlertTriangle className="w-5 h-5" /> },
-        { label: 'Reports & Stats', path: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> }];
-
+          { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
+          { label: 'Users', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
+          { label: 'Zones & Slots', path: '/admin/zones', icon: <MapPin className="w-5 h-5" /> },
+          { label: 'Permits', path: '/admin/permits', icon: <ShieldCheck className="w-5 h-5" /> },
+          { label: 'Reservations', path: '/admin/reservations', icon: <Calendar className="w-5 h-5" /> },
+          { label: 'Parking Activity', path: '/admin/logs', icon: <FileText className="w-5 h-5" /> },
+          { label: 'Violations', path: '/admin/violations', icon: <AlertTriangle className="w-5 h-5" /> },
+          { label: 'Reports & Stats', path: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> },
+          { label: 'Notifications', path: '/admin/notifications', icon: <Bell className="w-5 h-5" /> }
+        ];
       case 'USER':
         return [
-        { label: 'Dashboard', path: '/user', icon: <LayoutDashboard className="w-5 h-5" /> },
-        { label: 'Parking Map', path: '/user/map', icon: <Map className="w-5 h-5" /> },
-        { label: 'My Permit', path: '/user/permit', icon: <CreditCard className="w-5 h-5" /> }];
-
+          { label: 'Dashboard', path: '/user', icon: <LayoutDashboard className="w-5 h-5" /> },
+          { label: 'Parking Map', path: '/user/map', icon: <Map className="w-5 h-5" /> },
+          { label: 'My Permit', path: '/user/permit', icon: <CreditCard className="w-5 h-5" /> }
+        ];
       case 'SECURITY':
         return [
-        { label: 'Dashboard', path: '/security', icon: <LayoutDashboard className="w-5 h-5" /> },
-        { label: 'Verify Permit', path: '/security/verify', icon: <ShieldCheck className="w-5 h-5" /> },
-        { label: 'My Reports', path: '/security/reports', icon: <AlertTriangle className="w-5 h-5" /> },
-        { label: 'Activity Log', path: '/security/logs', icon: <FileText className="w-5 h-5" /> }];
-
+          { label: 'Dashboard', path: '/security', icon: <LayoutDashboard className="w-5 h-5" /> },
+          { label: 'Verify Permit', path: '/security/verify', icon: <ShieldCheck className="w-5 h-5" /> },
+          { label: 'My Reports', path: '/security/reports', icon: <AlertTriangle className="w-5 h-5" /> },
+          { label: 'Activity Log', path: '/security/logs', icon: <FileText className="w-5 h-5" /> }
+        ];
       default:
         return [];
     }
   };
+
   const navItems = getNavItems();
+
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
   const getRoleBadgeVariant = () => {
     if (user.role === 'ADMIN') return 'danger';
     if (user.role === 'SECURITY') return 'warning';
     return 'info';
   };
+
+  const getNotifDotColor = (type: string) => {
+    if (type === 'SUCCESS') return 'bg-emerald-500';
+    if (type === 'WARNING') return 'bg-amber-500';
+    if (type === 'ERROR') return 'bg-rose-500';
+    return 'bg-cyan-500';
+  };
+
+  const NotificationBell = ({ mobile = false }: { mobile?: boolean }) => (
+    <button
+      onClick={() => setShowNotifications(!showNotifications)}
+      className={clsx(
+        'relative',
+        mobile
+          ? 'p-2 text-slate-300'
+          : 'p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors'
+      )}>
+      <Bell className="w-5 h-5" />
+      {roleUnreadCount > 0 && (
+        <span className={clsx(
+          'absolute w-2 h-2 rounded-full bg-rose-500',
+          mobile ? 'top-1 right-1' : 'top-1.5 right-1.5 ring-2 ring-slate-900'
+        )} />
+      )}
+    </button>
+  );
+
+  const NotificationsPanel = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+      className="absolute right-0 mt-2 w-80 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50">
+
+      <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/95">
+        <div>
+          <h3 className="font-semibold text-white">Notifications</h3>
+          <p className="text-[10px] text-slate-500 mt-0.5 capitalize">{user.role.toLowerCase()} inbox</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="neutral">{roleUnreadCount} new</Badge>
+          {roleUnreadCount > 0 && (
+            <button
+              onClick={() => markAllAsRead(user.role)}
+              className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors">
+              Mark all read
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="max-h-80 overflow-y-auto hide-scrollbar bg-slate-950/95">
+        {roleNotifications.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-sm">No notifications</div>
+        ) : (
+          roleNotifications.map((notif) => (
+            <div
+              key={notif.id}
+              className={clsx(
+                'p-4 border-b border-slate-800 hover:bg-slate-900/80 transition-colors cursor-pointer',
+                !notif.read && 'bg-slate-900/80'
+              )}
+              onClick={() => markAsRead(notif.id)}>
+              <div className="flex items-start gap-3">
+                <div className={clsx('w-2 h-2 rounded-full mt-1.5 shrink-0', getNotifDotColor(notif.type))} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">{notif.title}</p>
+                  <p className="text-xs text-slate-400 mt-1">{notif.message}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[10px] text-slate-500">
+                      {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    {notif.targetRole === 'ALL' && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-slate-500 uppercase tracking-wide">broadcast</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">
       {/* Sidebar - Desktop */}
@@ -86,9 +178,7 @@ export const AppShell: React.FC<{
           <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
             <MapPin className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">
-            ParkSmart
-          </span>
+          <span className="text-xl font-bold text-white tracking-tight">ParkSmart</span>
         </div>
 
         <div className="px-6 pb-4">
@@ -97,13 +187,8 @@ export const AppShell: React.FC<{
               {user.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user.name}
-              </p>
-              <Badge
-                variant={getRoleBadgeVariant()}
-                className="mt-1 text-[10px] px-1.5 py-0">
-                
+              <p className="text-sm font-medium text-white truncate">{user.name}</p>
+              <Badge variant={getRoleBadgeVariant()} className="mt-1 text-[10px] px-1.5 py-0">
                 {user.role}
               </Badge>
             </div>
@@ -111,42 +196,36 @@ export const AppShell: React.FC<{
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto hide-scrollbar">
-          {navItems.map((item) =>
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={
-            item.path === '/admin' ||
-            item.path === '/user' ||
-            item.path === '/security'
-            }
-            className={({ isActive }) =>
-            clsx(
-              'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
-              isActive ?
-              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
-              'text-slate-400 hover:text-white hover:bg-white/5'
-            )
-            }>
-            
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === '/admin' || item.path === '/user' || item.path === '/security'}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all',
+                  isActive
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                )
+              }>
               {item.icon}
               {item.label}
             </NavLink>
-          )}
+          ))}
         </nav>
 
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-            
             <LogOut className="w-5 h-5" />
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Mobile Header & Nav */}
+      {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 glass-panel border-x-0 border-t-0 rounded-none z-30 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
@@ -155,80 +234,56 @@ export const AppShell: React.FC<{
           <span className="text-lg font-bold text-white">ParkSmart</span>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-slate-300">
-            
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 &&
-            <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
-            }
-          </button>
+          <div className="relative">
+            <NotificationBell mobile />
+            <AnimatePresence>
+              {showNotifications && <NotificationsPanel />}
+            </AnimatePresence>
+          </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 text-slate-300">
-            
-            {isMobileMenuOpen ?
-            <X className="w-6 h-6" /> :
-
-            <Menu className="w-6 h-6" />
-            }
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
-        {isMobileMenuOpen &&
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: -20
-          }}
-          animate={{
-            opacity: 1,
-            y: 0
-          }}
-          exit={{
-            opacity: 0,
-            y: -20
-          }}
-          className="md:hidden fixed inset-0 top-16 z-20 glass-panel rounded-none flex flex-col">
-          
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden fixed inset-0 top-16 z-20 glass-panel rounded-none flex flex-col">
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {navItems.map((item) =>
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={
-              item.path === '/admin' ||
-              item.path === '/user' ||
-              item.path === '/security'
-              }
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-3 px-4 py-4 rounded-xl text-base font-medium transition-all',
-                isActive ?
-                'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
-                'text-slate-300 hover:bg-white/5'
-              )
-              }>
-              
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/admin' || item.path === '/user' || item.path === '/security'}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-3 px-4 py-4 rounded-xl text-base font-medium transition-all',
+                      isActive
+                        ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                        : 'text-slate-300 hover:bg-white/5'
+                    )
+                  }>
                   {item.icon}
                   {item.label}
                 </NavLink>
-            )}
+              ))}
               <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-4 rounded-xl text-base font-medium text-rose-400 hover:bg-rose-500/10">
-              
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full px-4 py-4 rounded-xl text-base font-medium text-rose-400 hover:bg-rose-500/10">
                 <LogOut className="w-5 h-5" />
                 Sign Out
               </button>
             </nav>
           </motion.div>
-        }
+        )}
       </AnimatePresence>
 
       {/* Main Content */}
@@ -236,93 +291,9 @@ export const AppShell: React.FC<{
         {/* Desktop Topbar */}
         <header className="hidden md:flex h-16 glass-panel border-x-0 border-t-0 rounded-none items-center justify-end px-8 z-10 shrink-0">
           <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors relative">
-              
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 &&
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-900"></span>
-              }
-            </button>
-
-            {/* Notifications Dropdown */}
+            <NotificationBell />
             <AnimatePresence>
-              {showNotifications &&
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.95
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.95
-                }}
-                className="absolute right-0 mt-2 w-80 bg-slate-950/95 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50">
-                
-                  <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/95">
-                    <h3 className="font-semibold text-white">Notifications</h3>
-                    <Badge variant="neutral">{unreadCount} new</Badge>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto hide-scrollbar bg-slate-950/95">
-                    {notifications.length === 0 ?
-                  <div className="p-8 text-center text-slate-400 text-sm">
-                        No notifications
-                      </div> :
-
-                  notifications.map((notif) =>
-                  <div
-                    key={notif.id}
-                    className={clsx(
-                      'p-4 border-b border-slate-800 hover:bg-slate-900/80 transition-colors cursor-pointer',
-                      !notif.read && 'bg-slate-900/80'
-                    )}
-                    onClick={() => markAsRead(notif.id)}>
-                    
-                          <div className="flex items-start gap-3">
-                            <div
-                        className={clsx(
-                          'w-2 h-2 rounded-full mt-1.5 shrink-0',
-                          notif.type === 'SUCCESS' ?
-                          'bg-emerald-500' :
-                          notif.type === 'WARNING' ?
-                          'bg-amber-500' :
-                          notif.type === 'ERROR' ?
-                          'bg-rose-500' :
-                          'bg-cyan-500'
-                        )} />
-                      
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                {notif.title}
-                              </p>
-                              <p className="text-xs text-slate-400 mt-1">
-                                {notif.message}
-                              </p>
-                              <p className="text-[10px] text-slate-500 mt-2">
-                                {new Date(notif.timestamp).toLocaleTimeString(
-                            [],
-                            {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }
-                          )}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                  )
-                  }
-                  </div>
-                </motion.div>
-              }
+              {showNotifications && <NotificationsPanel />}
             </AnimatePresence>
           </div>
         </header>
@@ -332,28 +303,16 @@ export const AppShell: React.FC<{
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{
-                opacity: 0,
-                y: 20
-              }}
-              animate={{
-                opacity: 1,
-                y: 0
-              }}
-              exit={{
-                opacity: 0,
-                y: -20
-              }}
-              transition={{
-                duration: 0.3
-              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
               className="max-w-7xl mx-auto">
-              
               {children}
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
-    </div>);
-
+    </div>
+  );
 };

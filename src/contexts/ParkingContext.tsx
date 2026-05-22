@@ -148,7 +148,8 @@ export const ParkingProvider: React.FC<{
               userId: res.userId,
               title: 'Reservation Expired',
               message: 'Your parking reservation has expired.',
-              type: 'WARNING'
+              type: 'WARNING',
+              targetRole: 'USER'
             });
             return {
               ...res,
@@ -250,6 +251,7 @@ export const ParkingProvider: React.FC<{
         title: 'Reservation Confirmed',
         message: `Your parking slot is reserved until ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Check your dashboard for details.`,
         type: 'SUCCESS',
+        targetRole: 'USER'
       });
     },
     [addNotification]
@@ -282,6 +284,7 @@ export const ParkingProvider: React.FC<{
           title: 'Reservation Cancelled',
           message: 'Your parking reservation has been cancelled and the slot is now available.',
           type: 'WARNING',
+          targetRole: 'USER'
         });
         return prev.map((r) =>
         r.id === reservationId ?
@@ -319,31 +322,37 @@ export const ParkingProvider: React.FC<{
     []
   );
   const approvePermit = useCallback((permitId: string) => {
-    setPermits((prev) =>
-    prev.map((p) =>
-    p.id === permitId ?
-    {
-      ...p,
-      status: 'ACTIVE'
-    } :
-    p
-    )
-    );
+    setPermits((prev) => {
+      const permit = prev.find((p) => p.id === permitId);
+      if (permit) {
+        addNotification({
+          userId: permit.userId,
+          title: 'Permit Approved',
+          message: `Your parking permit (${permit.permitNumber}) has been approved and is now active.`,
+          type: 'SUCCESS',
+          targetRole: 'USER'
+        });
+      }
+      return prev.map((p) => p.id === permitId ? { ...p, status: 'ACTIVE' } : p);
+    });
     toast.success('Permit approved');
-  }, []);
+  }, [addNotification]);
   const revokePermit = useCallback((permitId: string) => {
-    setPermits((prev) =>
-    prev.map((p) =>
-    p.id === permitId ?
-    {
-      ...p,
-      status: 'REVOKED'
-    } :
-    p
-    )
-    );
+    setPermits((prev) => {
+      const permit = prev.find((p) => p.id === permitId);
+      if (permit) {
+        addNotification({
+          userId: permit.userId,
+          title: 'Permit Revoked',
+          message: `Your parking permit (${permit.permitNumber}) has been revoked. Contact the admin for more information.`,
+          type: 'ERROR',
+          targetRole: 'USER'
+        });
+      }
+      return prev.map((p) => p.id === permitId ? { ...p, status: 'REVOKED' } : p);
+    });
     toast.error('Permit revoked');
-  }, []);
+  }, [addNotification]);
   const addLog = useCallback((log: Omit<LogEntry, 'id' | 'timestamp'>) => {
     addLogInternal(log);
   }, []);
@@ -357,8 +366,15 @@ export const ParkingProvider: React.FC<{
       };
       setViolations((prev) => [newViolation, ...prev]);
       toast.success('Violation reported successfully');
+      addNotification({
+        userId: 'system',
+        title: 'Violation Reported',
+        message: `A parking violation has been filed at ${violation.location} for vehicle ${violation.vehiclePlate}.`,
+        type: 'WARNING',
+        targetRole: 'ADMIN'
+      });
     },
-    []
+    [addNotification]
   );
   const resolveViolation = useCallback((violationId: string) => {
     setViolations((prev) =>
@@ -526,9 +542,16 @@ export const ParkingProvider: React.FC<{
         status: 'PENDING'
       };
       toast.success('Permit application submitted for admin review');
+      addNotification({
+        userId: 'system',
+        title: 'New Permit Application',
+        message: `A user has submitted a permit application for vehicle ${vehiclePlate}. Review it in the Permits section.`,
+        type: 'INFO',
+        targetRole: 'ADMIN'
+      });
       return [...prev, newPermit];
     });
-  }, []);
+  }, [addNotification]);
   const resetData = useCallback(() => {
     clearAllStorage();
     setZones(mockZones);

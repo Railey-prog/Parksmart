@@ -7,8 +7,7 @@ import {
   LogEntry,
   Violation,
   Notification,
-  SlotStatus } from
-'../types';
+  SlotStatus } from '../types';
 
 export const mockUsers: User[] = [
 {
@@ -64,7 +63,6 @@ count: number)
     const isAccessible = i <= 2;
     const isEV = i > 2 && i <= 4;
 
-    // Randomize initial status
     const rand = Math.random();
     let status: SlotStatus = 'AVAILABLE';
     if (rand > 0.8) status = 'OCCUPIED';else
@@ -234,7 +232,8 @@ export const mockNotifications: Notification[] = [
   message: 'Your reservation for N-05 is confirmed.',
   timestamp: now.toISOString(),
   read: false,
-  type: 'SUCCESS'
+  type: 'SUCCESS',
+  targetRole: 'USER'
 },
 {
   id: 'n2',
@@ -243,7 +242,28 @@ export const mockNotifications: Notification[] = [
   message: 'Parking demand is high in North Campus Lot.',
   timestamp: new Date(now.getTime() - 2 * 60 * 60000).toISOString(),
   read: true,
-  type: 'WARNING'
+  type: 'WARNING',
+  targetRole: 'ALL'
+},
+{
+  id: 'n3',
+  userId: 'system',
+  title: 'New Permit Application',
+  message: 'A new permit application is waiting for your review.',
+  timestamp: new Date(now.getTime() - 30 * 60000).toISOString(),
+  read: false,
+  type: 'INFO',
+  targetRole: 'ADMIN'
+},
+{
+  id: 'n4',
+  userId: 'system',
+  title: 'Violation Reported',
+  message: 'A new parking violation has been reported at North Campus Lot.',
+  timestamp: new Date(now.getTime() - 45 * 60000).toISOString(),
+  read: false,
+  type: 'WARNING',
+  targetRole: 'SECURITY'
 }];
 
 
