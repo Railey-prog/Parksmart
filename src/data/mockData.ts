@@ -50,7 +50,7 @@ export const mockUsers: User[] = [
   role: 'USER',
   vehiclePlate: 'EV-001',
   vehicleModel: 'Tesla Model 3',
-  status: 'PENDING'
+  status: 'APPROVED'
 }];
 
 
@@ -168,15 +168,7 @@ export const mockPermits: Permit[] = [
   expiryDate: '2026-12-31T23:59:59Z',
   status: 'ACTIVE'
 },
-{
-  id: 'p3',
-  userId: 'u5',
-  permitNumber: 'PRM-2026-003',
-  vehiclePlate: 'EV-001',
-  issueDate: '2026-05-20T00:00:00Z',
-  expiryDate: '2026-12-31T23:59:59Z',
-  status: 'PENDING'
-}];
+];
 
 
 export const mockLogs: LogEntry[] = [

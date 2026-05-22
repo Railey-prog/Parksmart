@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
-import { MapPin, Mail, Lock } from 'lucide-react';
+import { MapPin, Mail, Lock, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockUsers } from '../../data/mockData';
 import { loadFromStorage } from '../../lib/storage';
@@ -37,6 +37,11 @@ export const Login = () => {
         toast.error('Account not found. Check your email.');
       }
     }
+  };
+
+  const handleResetDemo = () => {
+    localStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -89,12 +94,24 @@ export const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-400 space-y-1">
-          <p className="font-semibold text-slate-300 mb-2">Demo Accounts (any password):</p>
-          <p>Admin: admin@parksmart.edu</p>
-          <p>User: jane.doe@parksmart.edu</p>
-          <p>Security: security@parksmart.edu</p>
+        {/* Demo accounts */}
+        <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-400 space-y-2">
+          <p className="font-semibold text-slate-300 mb-1">Demo Accounts (any password):</p>
+          <div className="space-y-1">
+            <p><span className="text-indigo-400 font-medium">Admin:</span> admin@parksmart.edu</p>
+            <p><span className="text-emerald-400 font-medium">User (has permit):</span> jane.doe@parksmart.edu</p>
+            <p><span className="text-amber-400 font-medium">User (no permit — apply here):</span> alice.j@parksmart.edu</p>
+            <p><span className="text-cyan-400 font-medium">Security:</span> security@parksmart.edu</p>
+          </div>
         </div>
+
+        {/* Reset demo data */}
+        <button
+          onClick={handleResetDemo}
+          className="mt-4 w-full flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-300 transition-colors py-2">
+          <RotateCcw className="w-3 h-3" />
+          Reset demo data
+        </button>
       </GlassCard>
     </div>
   );
