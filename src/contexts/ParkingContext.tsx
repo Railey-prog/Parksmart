@@ -23,6 +23,7 @@ interface ParkingContextType {
   reportViolation: (violation: Omit<Violation, 'id' | 'timestamp' | 'status' | 'reportedBy' | 'reportedByName'>) => void;
   resolveViolation: (violationId: string) => void;
   updateViolationStatus: (violationId: string, status: 'OPEN' | 'RESOLVED') => void;
+  deleteViolation: (violationId: string) => void;
   updateUserStatus: (userId: string, status: 'APPROVED' | 'REJECTED') => void;
   createUser: (user: Omit<User, 'id'>) => boolean;
   updateUser: (id: string, data: Partial<User>) => void;
@@ -203,6 +204,14 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toast.success(`Violation marked as ${status.toLowerCase()}`);
   }, []);
 
+  const deleteViolation = useCallback((violationId: string) => {
+    setViolations((prev) => prev.filter((v) => v.id !== violationId));
+    api.deleteViolation(violationId).catch(() => {
+      toast.error('Failed to delete violation');
+    });
+    toast.success('Violation deleted');
+  }, []);
+
   const updateUserStatus = useCallback((userId: string, status: 'APPROVED' | 'REJECTED') => {
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status } : u));
     api.updateUserStatus(userId, status).catch(() => {});
@@ -308,7 +317,7 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       approveReservation, approvePermit, revokePermit, addLog, reportViolation, resolveViolation,
       updateUserStatus, createUser, updateUser, deleteUser,
       createZone, updateZone, deleteZone, createSlot, deleteSlot,
-      requestPermit, resetData, updateViolationStatus
+      requestPermit, resetData, updateViolationStatus, deleteViolation
     }}>
       {children}
     </ParkingContext.Provider>

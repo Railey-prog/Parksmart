@@ -51,6 +51,17 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM violations WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.patch('/:id/resolve', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(

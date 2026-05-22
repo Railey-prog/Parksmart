@@ -67,6 +67,7 @@ export const api = {
   reportViolation: (data: any) => request<any>('POST', '/violations', data),
   resolveViolation: (id: string) => request<any>('PATCH', `/violations/${id}/resolve`),
   updateViolationStatus: (id: string, status: string) => request<any>('PATCH', `/violations/${id}/status`, { status }),
+  deleteViolation: (id: string) => request<any>('DELETE', `/violations/${id}`),
 
   // Notifications
   getNotifications: () => request<any[]>('GET', '/notifications'),

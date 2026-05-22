@@ -8,7 +8,7 @@ import { Modal } from '../../components/common/Modal';
 import { StatCard } from '../../components/common/StatCard';
 import {
   AlertTriangle, CheckCircle, Clock, Car,
-  MapPin, FileText, Plus
+  MapPin, FileText, Plus, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,7 +26,8 @@ const VIOLATION_TYPES = [
 ];
 
 export const SecurityReports = () => {
-  const { violations, reportViolation, addLog } = useParking();
+  const { violations, reportViolation, addLog, deleteViolation } = useParking();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const { user } = useAuth();
   const [filter, setFilter] = useState<Filter>('ALL');
   const [showModal, setShowModal] = useState(false);
@@ -160,18 +161,57 @@ export const SecurityReports = () => {
                   </div>
                 </div>
 
-                {v.status === 'RESOLVED' ? (
-                  <span className="shrink-0 flex items-center gap-1.5 text-xs text-emerald-400 font-medium px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <CheckCircle className="w-3.5 h-3.5" /> Admin resolved
-                  </span>
-                ) : (
-                  <span className="shrink-0 flex items-center gap-1.5 text-xs text-amber-400 font-medium px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <Clock className="w-3.5 h-3.5" /> Awaiting action
-                  </span>
-                )}
+                <div className="shrink-0 flex flex-col gap-2 items-end">
+                  {v.status === 'RESOLVED' ? (
+                    <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <CheckCircle className="w-3.5 h-3.5" /> Admin resolved
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-xs text-amber-400 font-medium px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                      <Clock className="w-3.5 h-3.5" /> Awaiting action
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setConfirmDeleteId(v.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 border border-rose-500/20 hover:bg-rose-500/10 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </div>
               </div>
             </GlassCard>
           ))}
+        </div>
+      )}
+
+      {/* Confirm delete dialog */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Delete This Report?</p>
+                <p className="text-slate-400 text-sm mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { deleteViolation(confirmDeleteId); setConfirmDeleteId(null); }}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
