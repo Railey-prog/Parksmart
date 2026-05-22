@@ -19,10 +19,7 @@ const ZONE_SLOTS = {
 
 const USERS = [
   { id: 'u1', name: 'Admin User', email: 'admin@parksmart.edu', role: 'ADMIN', status: 'APPROVED' },
-  { id: 'u2', name: 'Jane Doe', email: 'jane.doe@parksmart.edu', role: 'USER', status: 'APPROVED', vehicle_plate: 'ABC-1234', vehicle_model: 'Toyota Camry' },
   { id: 'u3', name: 'Security Officer Bob', email: 'security@parksmart.edu', role: 'SECURITY', status: 'APPROVED' },
-  { id: 'u4', name: 'John Smith', email: 'john.smith@parksmart.edu', role: 'USER', status: 'APPROVED', vehicle_plate: 'XYZ-9876', vehicle_model: 'Honda Civic' },
-  { id: 'u5', name: 'Alice Johnson', email: 'alice.j@parksmart.edu', role: 'USER', status: 'APPROVED', vehicle_plate: 'EV-001', vehicle_model: 'Tesla Model 3' },
 ];
 
 module.exports = async function seed() {
@@ -65,34 +62,6 @@ module.exports = async function seed() {
   }
 
   const now = new Date();
-  const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
-  const inTwoHours = new Date(now.getTime() + 120 * 60 * 1000);
-  const pastHour = new Date(now.getTime() - 60 * 60 * 1000);
-
-  const reservations = [
-    { id: 'r1', user_id: 'u2', slot_id: 's_z1_5', zone_id: 'z1', start: now, end: inOneHour, status: 'ACTIVE' },
-    { id: 'r2', user_id: 'u4', slot_id: 's_z2_1', zone_id: 'z2', start: now, end: inTwoHours, status: 'ACTIVE' },
-    { id: 'r3', user_id: 'u2', slot_id: 's_z1_2', zone_id: 'z1', start: pastHour, end: now, status: 'COMPLETED' },
-  ];
-  for (const r of reservations) {
-    await pool.query(
-      `INSERT INTO reservations (id, user_id, slot_id, zone_id, start_time, end_time, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`,
-      [r.id, r.user_id, r.slot_id, r.zone_id, r.start, r.end, r.status]
-    );
-  }
-
-  const permits = [
-    { id: 'p1', user_id: 'u2', permit_number: 'PRM-2026-001', vehicle_plate: 'ABC-1234', issue: '2026-01-01', expiry: '2026-12-31', status: 'ACTIVE' },
-    { id: 'p2', user_id: 'u4', permit_number: 'PRM-2026-002', vehicle_plate: 'XYZ-9876', issue: '2026-01-01', expiry: '2026-12-31', status: 'ACTIVE' },
-  ];
-  for (const p of permits) {
-    await pool.query(
-      `INSERT INTO permits (id, user_id, permit_number, vehicle_plate, issue_date, expiry_date, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`,
-      [p.id, p.user_id, p.permit_number, p.vehicle_plate, p.issue, p.expiry, p.status]
-    );
-  }
 
   const violations = [
     { id: 'v1', reported_by: 'u3', vehicle_plate: 'UNK-999', description: 'Parked in EV spot without EV permit', status: 'OPEN', location: 'North Campus Lot (N-04)', ts: new Date(now.getTime() - 30 * 60000) },
@@ -121,8 +90,6 @@ module.exports = async function seed() {
   }
 
   const notifications = [
-    { id: 'n1', user_id: 'u2', title: 'Reservation Confirmed', message: 'Your reservation for N-05 is confirmed.', type: 'SUCCESS', target_role: 'USER', read: false },
-    { id: 'n2', user_id: 'u2', title: 'Peak Hour Alert', message: 'Parking demand is high in North Campus Lot.', type: 'WARNING', target_role: 'ALL', read: true },
     { id: 'n3', user_id: 'system', title: 'New Permit Application', message: 'A new permit application is waiting for your review.', type: 'INFO', target_role: 'ADMIN', read: false },
     { id: 'n4', user_id: 'system', title: 'Violation Reported', message: 'A new parking violation has been reported at North Campus Lot.', type: 'WARNING', target_role: 'SECURITY', read: false },
   ];
@@ -135,5 +102,6 @@ module.exports = async function seed() {
   }
 
   console.log('✓ Database seeded with demo data');
-  console.log('  Login with any demo email + password: "password"');
+  console.log('  Admin: admin@parksmart.edu / password');
+  console.log('  Security: security@parksmart.edu / password');
 };
