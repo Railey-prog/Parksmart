@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useParking } from '../../contexts/ParkingContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { StatCard } from '../../components/common/StatCard';
-import { AlertTriangle, CheckCircle, Car, MapPin, FileText, ChevronDown } from 'lucide-react';
+import { StatusDropdown } from '../../components/common/StatusDropdown';
+import { AlertTriangle, CheckCircle, Car, MapPin, FileText } from 'lucide-react';
 
 type Filter = 'ALL' | 'OPEN' | 'RESOLVED';
 
@@ -127,24 +128,11 @@ export const AdminViolations = () => {
                 </div>
 
                 {/* Status dropdown */}
-                <div className="relative shrink-0">
-                  <select
-                    value={v.status}
-                    onChange={(e) => updateViolationStatus(v.id, e.target.value as 'OPEN' | 'RESOLVED')}
-                    className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-sm font-semibold border cursor-pointer transition-all focus:outline-none ${
-                      v.status === 'OPEN'
-                        ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25'
-                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
-                    }`}
-                    style={{ colorScheme: 'dark' }}
-                  >
-                    <option value="OPEN">OPEN</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                  </select>
-                  <ChevronDown className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${
-                    v.status === 'OPEN' ? 'text-rose-400' : 'text-emerald-400'
-                  }`} />
-                </div>
+                <StatusDropdown
+                  value={v.status}
+                  options={[{ value: 'OPEN', label: 'OPEN' }, { value: 'RESOLVED', label: 'RESOLVED' }]}
+                  onChange={(val) => updateViolationStatus(v.id, val as 'OPEN' | 'RESOLVED')}
+                />
               </div>
             </GlassCard>
           ))}
