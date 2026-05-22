@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParking } from '../../contexts/ParkingContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { StatCard } from '../../components/common/StatCard';
-import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Filter = 'ALL' | 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
@@ -15,6 +15,63 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'info' |
   EXPIRED: 'neutral',
   CANCELLED: 'danger',
   COMPLETED: 'info',
+};
+
+const ActionDropdown = ({
+  reservation,
+  onApprove,
+  onCancel,
+}: {
+  reservation: { id: string; status: string };
+  onApprove: (id: string) => void;
+  onCancel: (id: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const canApprove = reservation.status === 'PENDING';
+  const canCancel = reservation.status === 'PENDING' || reservation.status === 'ACTIVE';
+  if (!canApprove && !canCancel) return null;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors font-medium"
+      >
+        Actions <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-40 bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden">
+          {canApprove && (
+            <button
+              onClick={() => { onApprove(reservation.id); setOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2.5 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors font-medium"
+            >
+              <CheckCheck className="w-3.5 h-3.5" /> Approve Reservation
+            </button>
+          )}
+          {canCancel && (
+            <button
+              onClick={() => { onCancel(reservation.id); setOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors font-medium border-t border-white/5"
+            >
+              <Ban className="w-3.5 h-3.5" /> Cancel
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const AdminReservations = () => {
@@ -75,11 +132,19 @@ export const AdminReservations = () => {
       </div>
 
       {pending.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-200/80">
-          <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <span>
-            {pending.length} reservation{pending.length > 1 ? 's are' : ' is'} awaiting your approval.
-          </span>
+        <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-200/80">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+            <span>
+              {pending.length} reservation{pending.length > 1 ? 's are' : ' is'} awaiting your approval.
+            </span>
+          </div>
+          <button
+            onClick={() => setFilter('PENDING')}
+            className="shrink-0 text-xs text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 transition-colors"
+          >
+            Review now →
+          </button>
         </div>
       )}
 
@@ -130,8 +195,12 @@ export const AdminReservations = () => {
                   const zone = getZone(r.zoneId);
                   const slot = getSlot(r.zoneId, r.slotId);
                   const owner = getUser(r.userId);
+                  const isPending = r.status === 'PENDING';
                   return (
-                    <tr key={r.id} className="hover:bg-white/5 transition-colors">
+                    <tr
+                      key={r.id}
+                      className={`hover:bg-white/5 transition-colors ${isPending ? 'bg-amber-500/5' : ''}`}
+                    >
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 text-xs font-bold shrink-0">
@@ -161,24 +230,11 @@ export const AdminReservations = () => {
                         <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'}>{r.status}</Badge>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          {r.status === 'PENDING' && (
-                            <button
-                              onClick={() => handleApprove(r.id)}
-                              className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:bg-emerald-500/10 transition-colors font-medium"
-                            >
-                              <CheckCheck className="w-3.5 h-3.5" /> Approve
-                            </button>
-                          )}
-                          {(r.status === 'PENDING' || r.status === 'ACTIVE') && (
-                            <button
-                              onClick={() => handleCancel(r.id)}
-                              className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition-colors font-medium"
-                            >
-                              <Ban className="w-3.5 h-3.5" /> Cancel
-                            </button>
-                          )}
-                        </div>
+                        <ActionDropdown
+                          reservation={r}
+                          onApprove={handleApprove}
+                          onCancel={handleCancel}
+                        />
                       </td>
                     </tr>
                   );

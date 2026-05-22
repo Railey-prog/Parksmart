@@ -5,18 +5,26 @@ import { ParkingMap } from '../../components/parking/ParkingMap';
 import { ReservationModal } from '../../components/reservations/ReservationModal';
 import { Slot, Zone } from '../../types';
 import { useNavigate } from 'react-router-dom';
-import { ShieldX, FileText, Clock } from 'lucide-react';
+import { ShieldX, FileText, Clock, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const UserMap = () => {
   const { user } = useAuth();
-  const { reserveSlot, permits } = useParking();
+  const { reserveSlot, permits, reservations } = useParking();
   const navigate = useNavigate();
   const [selectedSlot, setSelectedSlot] = useState<{ slot: Slot; zone: Zone } | null>(null);
 
   const userPermit = permits.find((p) => p.userId === user?.id);
   const hasActivePermit = userPermit?.status === 'ACTIVE';
   const hasPendingPermit = userPermit?.status === 'PENDING';
+
+  const userActiveReservation = reservations.find(
+    (r) => r.userId === user?.id && r.status === 'ACTIVE'
+  );
+  const userPendingReservation = reservations.find(
+    (r) => r.userId === user?.id && r.status === 'PENDING'
+  );
+  const userSlotId = userActiveReservation?.slotId || userPendingReservation?.slotId;
 
   const handleSlotClick = (slot: Slot, zone: Zone) => {
     if (!hasActivePermit) {
@@ -43,7 +51,37 @@ export const UserMap = () => {
         <p className="text-slate-400 mt-1">Select an available slot to reserve</p>
       </div>
 
-      {/* Permit status banner */}
+      {/* Active reservation banner */}
+      {userActiveReservation && (
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+            <CheckCircle className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-indigo-300 font-semibold text-sm">Reservation Active — Your spot is highlighted</p>
+            <p className="text-indigo-200/60 text-xs mt-0.5">
+              Your reserved slot is shown in blue on the map below.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Pending reservation banner */}
+      {!userActiveReservation && userPendingReservation && (
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-amber-300 font-semibold text-sm">Pending Approval — Your requested slot is highlighted</p>
+            <p className="text-amber-200/60 text-xs mt-0.5">
+              Your slot is shown in blue below while awaiting admin approval.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* No permit banner */}
       {!hasActivePermit && (
         <div className={`flex items-start gap-4 p-4 rounded-xl border ${
           hasPendingPermit
@@ -87,7 +125,11 @@ export const UserMap = () => {
         </div>
       )}
 
-      <ParkingMap onSlotClick={handleSlotClick} dimmed={!hasActivePermit} />
+      <ParkingMap
+        onSlotClick={handleSlotClick}
+        dimmed={!hasActivePermit}
+        userSlotId={userSlotId}
+      />
 
       <ReservationModal
         isOpen={!!selectedSlot}
