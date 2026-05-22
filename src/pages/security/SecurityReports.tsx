@@ -65,7 +65,7 @@ export const SecurityReports = () => {
 
     addLog({
       type: 'VIOLATION',
-      description: `Violation reported: ${form.violationType} (${form.vehiclePlate.toUpperCase()}) at ${form.location}`,
+      description: `Violation reported – ${form.violationType.toLowerCase()}, plate ${form.vehiclePlate.toUpperCase()}, location ${form.location}`,
       vehiclePlate: form.vehiclePlate.toUpperCase(),
       severity: 'ERROR',
     });

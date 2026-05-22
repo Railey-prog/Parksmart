@@ -20,7 +20,7 @@ export const SecurityLogs = () => {
     e.preventDefault();
     addLog({
       type: formData.type,
-      description: `Vehicle ${formData.type === 'ENTRY' ? 'entered' : 'exited'} campus`,
+      description: `Vehicle ${formData.type === 'ENTRY' ? 'entered' : 'exited'} campus – plate ${formData.vehiclePlate.toUpperCase()}`,
       vehiclePlate: formData.vehiclePlate,
       severity: 'INFO'
     });

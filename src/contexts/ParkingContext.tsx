@@ -107,7 +107,7 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setZones((prev) => prev.map((z) => z.id === zoneId
         ? { ...z, slots: z.slots.map((s) => s.id === slotId ? { ...s, status: 'RESERVED' } : s) }
         : z));
-      addLogInternal({ type: 'SYSTEM', description: `Slot ${slotId} reserved by user ${userId}`, userId, severity: 'INFO' });
+      addLogInternal({ type: 'SYSTEM', description: `Parking reserved – slot ${slotId}, zone ${zoneId}`, userId, severity: 'INFO' });
       addNotification({
         userId, title: 'Reservation Confirmed',
         message: `Your parking slot is reserved until ${new Date(res.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,

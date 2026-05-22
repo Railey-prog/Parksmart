@@ -107,10 +107,10 @@ module.exports = async function seed() {
   }
 
   const logs = [
-    { id: 'l1', type: 'ENTRY', description: 'Vehicle entered North Campus Lot', vehicle_plate: 'ABC-1234', severity: 'INFO', ts: new Date(now.getTime() - 5 * 60000) },
-    { id: 'l2', type: 'EXIT', description: 'Vehicle exited South Faculty Garage', vehicle_plate: 'DEF-5678', severity: 'INFO', ts: new Date(now.getTime() - 15 * 60000) },
-    { id: 'l3', type: 'VIOLATION', description: 'Unauthorized parking in reserved slot', vehicle_plate: 'UNK-999', severity: 'WARNING', ts: new Date(now.getTime() - 30 * 60000) },
-    { id: 'l4', type: 'SYSTEM', description: 'Zone 3 maintenance mode activated', severity: 'INFO', ts: new Date(now.getTime() - 60 * 60000) },
+    { id: 'l1', type: 'ENTRY', description: 'Vehicle entered campus – plate ABC-1234, zone North Campus Lot', vehicle_plate: 'ABC-1234', severity: 'INFO', ts: new Date(now.getTime() - 5 * 60000) },
+    { id: 'l2', type: 'EXIT', description: 'Vehicle exited campus – plate DEF-5678, zone South Faculty Garage', vehicle_plate: 'DEF-5678', severity: 'INFO', ts: new Date(now.getTime() - 15 * 60000) },
+    { id: 'l3', type: 'VIOLATION', description: 'Violation reported – unauthorized parking in reserved slot, plate UNK-999, location North Campus Lot', vehicle_plate: 'UNK-999', severity: 'WARNING', ts: new Date(now.getTime() - 30 * 60000) },
+    { id: 'l4', type: 'SYSTEM', description: 'Zone maintenance activated – East Visitor Lot', severity: 'INFO', ts: new Date(now.getTime() - 60 * 60000) },
   ];
   for (const l of logs) {
     await pool.query(

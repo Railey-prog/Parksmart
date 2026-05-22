@@ -123,7 +123,7 @@ export const VerifyPermit = () => {
     if ('error' in res) {
       addLog({
         type: isExit ? 'EXIT' : 'ENTRY',
-        description: `${isExit ? 'Exit' : 'Entry'} DENIED — permit not found (${scannedPlate || manualInput || 'QR scan'})`,
+        description: `${isExit ? 'Exit' : 'Entry'} denied – no permit found, plate ${scannedPlate || manualInput || 'unknown'}`,
         severity: 'WARNING',
       });
       setReportForm((f) => ({ ...f, vehiclePlate: scannedPlate || manualInput || '' }));
@@ -131,7 +131,7 @@ export const VerifyPermit = () => {
     } else if (!res.isValid) {
       addLog({
         type: isExit ? 'EXIT' : 'ENTRY',
-        description: `${isExit ? 'Exit' : 'Entry'} DENIED — ${res.isExpired ? 'expired' : res.permit.status.toLowerCase()} permit (${res.permit.permitNumber})`,
+        description: `${isExit ? 'Exit' : 'Entry'} denied – ${res.isExpired ? 'expired' : 'inactive'} permit ${res.permit.permitNumber}, plate ${res.permit.vehiclePlate}`,
         vehiclePlate: res.permit.vehiclePlate,
         userId: res.user?.id,
         severity: 'WARNING',
@@ -142,8 +142,8 @@ export const VerifyPermit = () => {
       addLog({
         type: isExit ? 'EXIT' : 'ENTRY',
         description: isExit
-          ? `Exit CONFIRMED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · was at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`
-          : `Entry ALLOWED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · parked at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`,
+          ? `Exit confirmed – permit ${res.permit.permitNumber}, plate ${res.permit.vehiclePlate}`
+          : `Entry allowed – permit ${res.permit.permitNumber}, plate ${res.permit.vehiclePlate}${res.activeReservation ? `, slot ${res.activeReservation.slotName}` : ''}`,
         vehiclePlate: res.permit.vehiclePlate,
         userId: res.user?.id,
         severity: 'INFO',
@@ -241,7 +241,7 @@ export const VerifyPermit = () => {
 
     addLog({
       type: 'VIOLATION',
-      description: `Violation reported: unauthorized entry (${reportForm.vehiclePlate.toUpperCase()}) at ${reportForm.location}`,
+      description: `Violation reported – unauthorized entry, plate ${reportForm.vehiclePlate.toUpperCase()}, location ${reportForm.location}`,
       vehiclePlate: reportForm.vehiclePlate.toUpperCase(),
       severity: 'ERROR',
     });
