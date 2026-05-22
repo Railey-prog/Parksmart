@@ -44,10 +44,10 @@ function formatDuration(minutes: number) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-export const VerifyPermit = () => {
+export const VerifyPermit = ({ initialMode = 'entry' }: { initialMode?: GateMode }) => {
   const { permits, users, zones, reservations, addLog, reportViolation } = useParking();
   const { user: securityUser } = useAuth();
-  const [gateMode, setGateMode] = useState<GateMode>('entry');
+  const [gateMode, setGateMode] = useState<GateMode>(initialMode);
   const [activeTab, setActiveTab] = useState<Tab>('camera');
   const [manualInput, setManualInput] = useState('');
   const [result, setResult] = useState<VerifyResult>(null);

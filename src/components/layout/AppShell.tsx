@@ -12,6 +12,7 @@ import {
   MapPin,
   BarChart3,
   ShieldCheck,
+  ShieldX,
   FileText,
   Bell,
   LogOut,
@@ -64,7 +65,8 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       case 'SECURITY':
         return [
           { label: 'Dashboard', path: '/security', icon: <LayoutDashboard className="w-5 h-5" /> },
-          { label: 'Verify Permit', path: '/security/verify', icon: <ShieldCheck className="w-5 h-5" /> },
+          { label: 'Entry Verification', path: '/security/verify', icon: <ShieldCheck className="w-5 h-5" /> },
+          { label: 'Exit Verification', path: '/security/exit', icon: <ShieldX className="w-5 h-5" /> },
           { label: 'My Reports', path: '/security/reports', icon: <AlertTriangle className="w-5 h-5" /> },
           { label: 'Activity Log', path: '/security/logs', icon: <FileText className="w-5 h-5" /> }
         ];

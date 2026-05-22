@@ -5,8 +5,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import {
   MapPin, Mail, Lock, User, Car, Layers,
-  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2,
-  Eye, EyeOff
+  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Role } from '../../types';
@@ -32,15 +31,12 @@ export const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
 
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showSignupConfirm, setShowSignupConfirm] = useState(false);
   const [signupPlate, setSignupPlate] = useState('');
   const [signupModel, setSignupModel] = useState('');
   const [registering, setRegistering] = useState(false);
@@ -249,20 +245,14 @@ export const Login = () => {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type={showSignupPassword ? 'text' : 'password'} required value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="glass-input w-full pl-9 pr-8" placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowSignupPassword((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                        {showSignupPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
+                      <input type="password" required value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="glass-input w-full pl-9 pr-4" placeholder="••••••••" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Confirm</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type={showSignupConfirm ? 'text' : 'password'} required value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="glass-input w-full pl-9 pr-8" placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowSignupConfirm((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                        {showSignupConfirm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
+                      <input type="password" required value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="glass-input w-full pl-9 pr-4" placeholder="••••••••" />
                     </div>
                   </div>
                 </div>

@@ -117,7 +117,8 @@ const AppRoutes = () => {
             <AppShell>
               <Routes>
                 <Route path="/" element={<SecurityDashboard />} />
-                <Route path="/verify" element={<VerifyPermit />} />
+                <Route path="/verify" element={<VerifyPermit initialMode="entry" />} />
+                <Route path="/exit" element={<VerifyPermit initialMode="exit" />} />
                 <Route path="/logs" element={<SecurityLogs />} />
                 <Route path="/reports" element={<SecurityReports />} />
               </Routes>
