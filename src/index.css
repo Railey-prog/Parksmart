@@ -28,6 +28,15 @@
   }
   .glass-input {
     @apply bg-black/20 border border-white/10 rounded-lg py-2 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all;
+    color-scheme: dark;
+  }
+  .glass-input:-webkit-autofill,
+  .glass-input:-webkit-autofill:hover,
+  .glass-input:-webkit-autofill:focus,
+  .glass-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.3) inset !important;
+    -webkit-text-fill-color: white !important;
+    caret-color: white;
   }
   /* Theme for select dropdowns: dark blue system background */
   .theme-select,
