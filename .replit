@@ -42,3 +42,9 @@ externalPort = 80
 deploymentTarget = "static"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "parksmart_jwt_secret_replit_2026"
+NODE_ENV = "development"
