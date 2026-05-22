@@ -47,7 +47,7 @@ function formatDuration(minutes: number) {
 export const VerifyPermit = ({ initialMode = 'entry' }: { initialMode?: GateMode }) => {
   const { permits, users, zones, reservations, addLog, reportViolation } = useParking();
   const { user: securityUser } = useAuth();
-  const [gateMode, setGateMode] = useState<GateMode>(initialMode);
+  const gateMode: GateMode = initialMode;
   const [activeTab, setActiveTab] = useState<Tab>('camera');
   const [manualInput, setManualInput] = useState('');
   const [result, setResult] = useState<VerifyResult>(null);
@@ -263,29 +263,23 @@ export const VerifyPermit = ({ initialMode = 'entry' }: { initialMode?: GateMode
         </p>
       </div>
 
-      {/* Gate Mode Toggle */}
+      {/* Gate Mode Indicator */}
       {!result && (
-        <div className="flex rounded-xl bg-black/30 border border-white/10 p-1 gap-1">
-          <button
-            onClick={() => setGateMode('entry')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              gateMode === 'entry'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4" /> Entry
-          </button>
-          <button
-            onClick={() => setGateMode('exit')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              gateMode === 'exit'
-                ? 'bg-amber-500 text-white shadow'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <ShieldX className="w-4 h-4" /> Exit
-          </button>
+        <div className={`flex items-center justify-center gap-3 py-3 px-5 rounded-xl border ${
+          gateMode === 'entry'
+            ? 'bg-emerald-600/15 border-emerald-500/30'
+            : 'bg-amber-500/15 border-amber-500/30'
+        }`}>
+          {gateMode === 'entry' ? (
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+          ) : (
+            <ShieldX className="w-5 h-5 text-amber-400" />
+          )}
+          <span className={`text-sm font-bold uppercase tracking-widest ${
+            gateMode === 'entry' ? 'text-emerald-300' : 'text-amber-300'
+          }`}>
+            {gateMode === 'entry' ? 'Entry Verification Mode' : 'Exit Verification Mode'}
+          </span>
         </div>
       )}
 
