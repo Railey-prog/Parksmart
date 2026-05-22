@@ -5,7 +5,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import {
   MapPin, Mail, Lock, User, Car, Layers,
-  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2
+  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Role } from '../../types';
@@ -40,6 +40,10 @@ export const Login = () => {
   const [signupPlate, setSignupPlate] = useState('');
   const [signupModel, setSignupModel] = useState('');
   const [registering, setRegistering] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -174,7 +178,10 @@ export const Login = () => {
                 <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="glass-input w-full pl-10 pr-4" placeholder="••••••••" />
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} className="glass-input w-full pl-10 pr-10" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -245,14 +252,20 @@ export const Login = () => {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type="password" required value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="glass-input w-full pl-9 pr-4" placeholder="••••••••" />
+                      <input type={showSignupPassword ? 'text' : 'password'} required value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="glass-input w-full pl-9 pr-9" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowSignupPassword((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                        {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Confirm</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type="password" required value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="glass-input w-full pl-9 pr-4" placeholder="••••••••" />
+                      <input type={showConfirmPassword ? 'text' : 'password'} required value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="glass-input w-full pl-9 pr-9" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
                 </div>
