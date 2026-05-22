@@ -27,6 +27,7 @@ import { UserPermit } from './pages/user/UserPermit';
 import { SecurityDashboard } from './pages/security/SecurityDashboard';
 import { VerifyPermit } from './pages/security/VerifyPermit';
 import { SecurityLogs } from './pages/security/SecurityLogs';
+import { SecurityReports } from './pages/security/SecurityReports';
 
 const ProtectedRoute = ({
   children,
@@ -114,6 +115,7 @@ const AppRoutes = () => {
                 <Route path="/" element={<SecurityDashboard />} />
                 <Route path="/verify" element={<VerifyPermit />} />
                 <Route path="/logs" element={<SecurityLogs />} />
+                <Route path="/reports" element={<SecurityReports />} />
               </Routes>
             </AppShell>
           </ProtectedRoute>
