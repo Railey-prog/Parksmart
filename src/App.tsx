@@ -18,6 +18,7 @@ import { AdminZones } from './pages/admin/AdminZones';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 import { AdminPermits } from './pages/admin/AdminPermits';
 import { AdminLogs } from './pages/admin/AdminLogs';
+import { AdminViolations } from './pages/admin/AdminViolations';
 // User Pages
 import { UserDashboard } from './pages/user/UserDashboard';
 import { UserMap } from './pages/user/UserMap';
@@ -97,6 +98,7 @@ const AppRoutes = () => {
                 <Route path="/analytics" element={<AdminAnalytics />} />
                 <Route path="/permits" element={<AdminPermits />} />
                 <Route path="/logs" element={<AdminLogs />} />
+                <Route path="/violations" element={<AdminViolations />} />
               </Routes>
             </AppShell>
           </ProtectedRoute>

@@ -47,6 +47,7 @@ export const AppShell: React.FC<{
         { label: 'Zones & Slots', path: '/admin/zones', icon: <MapPin className="w-5 h-5" /> },
         { label: 'Permits', path: '/admin/permits', icon: <ShieldCheck className="w-5 h-5" /> },
         { label: 'Parking Activity', path: '/admin/logs', icon: <FileText className="w-5 h-5" /> },
+        { label: 'Violations', path: '/admin/violations', icon: <AlertTriangle className="w-5 h-5" /> },
         { label: 'Reports & Stats', path: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> }];
 
       case 'USER':
