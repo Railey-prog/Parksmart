@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
 import {
@@ -13,15 +13,16 @@ import {
   Users,
   Map,
   AlertTriangle,
-  Clock,
-  CheckCircle,
   Zap,
   Lock,
-  TrendingUp,
   FileText,
+  GraduationCap,
+  X,
   ChevronRight
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+type SignupRole = 'USER' | 'SECURITY';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -47,6 +48,119 @@ const GradientCard = ({
   </div>
 );
 
+/* ── Role Picker Modal ── */
+const RolePickerModal = ({
+  onSelect,
+  onClose
+}: {
+  onSelect: (role: SignupRole) => void;
+  onClose: () => void;
+}) => (
+  <AnimatePresence>
+    <motion.div
+      key="backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 24 }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+        className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-slate-400 hover:text-white">
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Header */}
+        <div className="px-8 pt-8 pb-6 text-center border-b border-white/8">
+          <div className="w-11 h-11 rounded-xl bg-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+            <MapPin className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Who are you joining as?</h2>
+          <p className="text-sm text-slate-400 mt-1">Choose your role to get started with the right account.</p>
+        </div>
+
+        {/* Role Cards */}
+        <div className="p-6 grid sm:grid-cols-2 gap-4">
+          {/* Student / Staff */}
+          <button
+            onClick={() => onSelect('USER')}
+            className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-all text-left focus:outline-none">
+            {/* Image */}
+            <div className="h-40 overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"
+                alt="Students"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            </div>
+            {/* Content */}
+            <div className="relative p-4 bg-slate-900 group-hover:bg-indigo-950/40 transition-colors">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-white">Student / Staff</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Reserve slots, apply for permits & manage your vehicle.
+              </p>
+            </div>
+          </button>
+
+          {/* Security Officer */}
+          <button
+            onClick={() => onSelect('SECURITY')}
+            className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all text-left focus:outline-none">
+            {/* Image */}
+            <div className="h-40 overflow-hidden relative">
+              <img
+                src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=600&auto=format&fit=crop"
+                alt="Security"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            </div>
+            {/* Content */}
+            <div className="relative p-4 bg-slate-900 group-hover:bg-amber-950/30 transition-colors">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-white">Security Officer</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Verify permits, log violations & monitor campus activity.
+              </p>
+            </div>
+          </button>
+        </div>
+
+        <p className="px-8 pb-6 text-center text-[11px] text-slate-600">
+          All accounts require admin approval before activation.
+        </p>
+      </motion.div>
+    </motion.div>
+  </AnimatePresence>
+);
+
+/* ── Data ── */
 const stats = [
   { value: '4', label: 'Parking Zones', suffix: '' },
   { value: '84', label: 'Total Slots', suffix: '+' },
@@ -161,36 +275,49 @@ const roles = [
 
 const howItWorks = [
   {
-    step: '01',
     icon: <Lock className="w-5 h-5" />,
     title: 'Create an Account',
     desc: 'Sign up with your campus email. An admin reviews and approves your account within minutes.'
   },
   {
-    step: '02',
     icon: <QrCode className="w-5 h-5" />,
     title: 'Apply for a Permit',
     desc: 'Submit your vehicle details to request a parking permit. Track approval status in real time.'
   },
   {
-    step: '03',
     icon: <Map className="w-5 h-5" />,
     title: 'Reserve Your Spot',
     desc: 'Open the live map, pick an available slot, set your duration, and confirm in one tap.'
   },
   {
-    step: '04',
-    icon: <CheckCircle className="w-5 h-5" />,
+    icon: <ShieldCheck className="w-5 h-5" />,
     title: 'Park with Confidence',
     desc: 'Show your QR permit at the gate. Security verifies instantly — no paperwork, no delays.'
   }
 ];
 
+/* ── Component ── */
 export const Landing = () => {
   const navigate = useNavigate();
+  const [showRolePicker, setShowRolePicker] = useState(false);
+
+  const handleRoleSelect = (role: SignupRole) => {
+    setShowRolePicker(false);
+    navigate('/login', { state: { mode: 'signup', role } });
+  };
+
+  const openRolePicker = () => setShowRolePicker(true);
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
+      {/* Role picker modal */}
+      {showRolePicker && (
+        <RolePickerModal
+          onSelect={handleRoleSelect}
+          onClose={() => setShowRolePicker(false)}
+        />
+      )}
+
       {/* Background glows */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[140px]" />
@@ -215,7 +342,7 @@ export const Landing = () => {
             </button>
             <Button
               size="sm"
-              onClick={() => navigate('/login')}
+              onClick={openRolePicker}
               rightIcon={<ArrowRight className="w-4 h-4" />}>
               Get Started
             </Button>
@@ -251,7 +378,7 @@ export const Landing = () => {
             <Button
               size="lg"
               rightIcon={<ArrowRight className="w-5 h-5" />}
-              onClick={() => navigate('/login')}>
+              onClick={openRolePicker}>
               Create Free Account
             </Button>
             <Button
@@ -317,9 +444,7 @@ export const Landing = () => {
             </motion.div>
 
             <div className="grid md:grid-cols-4 gap-6 relative">
-              {/* connector line */}
               <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-indigo-500/0 via-indigo-500/40 to-indigo-500/0" />
-
               {howItWorks.map((step, i) => (
                 <motion.div key={i} {...fadeUp(0.1 + i * 0.08)} className="text-center relative">
                   <div className="w-20 h-20 mx-auto rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center mb-4 text-indigo-400 relative z-10">
@@ -349,27 +474,9 @@ export const Landing = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {roles.map((r, i) => {
               const colors: Record<string, { border: string; iconBg: string; iconText: string; bullet: string; badge: string }> = {
-                indigo: {
-                  border: 'border-indigo-500/30',
-                  iconBg: 'bg-indigo-500/20',
-                  iconText: 'text-indigo-400',
-                  bullet: 'bg-indigo-500',
-                  badge: 'bg-indigo-500/15 text-indigo-300'
-                },
-                amber: {
-                  border: 'border-amber-500/30',
-                  iconBg: 'bg-amber-500/20',
-                  iconText: 'text-amber-400',
-                  bullet: 'bg-amber-500',
-                  badge: 'bg-amber-500/15 text-amber-300'
-                },
-                rose: {
-                  border: 'border-rose-500/30',
-                  iconBg: 'bg-rose-500/20',
-                  iconText: 'text-rose-400',
-                  bullet: 'bg-rose-500',
-                  badge: 'bg-rose-500/15 text-rose-300'
-                }
+                indigo: { border: 'border-indigo-500/30', iconBg: 'bg-indigo-500/20', iconText: 'text-indigo-400', bullet: 'bg-indigo-500', badge: 'bg-indigo-500/15 text-indigo-300' },
+                amber: { border: 'border-amber-500/30', iconBg: 'bg-amber-500/20', iconText: 'text-amber-400', bullet: 'bg-amber-500', badge: 'bg-amber-500/15 text-amber-300' },
+                rose: { border: 'border-rose-500/30', iconBg: 'bg-rose-500/20', iconText: 'text-rose-400', bullet: 'bg-rose-500', badge: 'bg-rose-500/15 text-rose-300' }
               };
               const c = colors[r.color];
               return (
@@ -378,9 +485,7 @@ export const Landing = () => {
                     <div className={`w-14 h-14 rounded-2xl ${c.iconBg} ${c.iconText} flex items-center justify-center mb-5`}>
                       {r.icon}
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${c.badge}`}>
-                      {r.role}
-                    </span>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${c.badge}`}>{r.role}</span>
                     <ul className="mt-5 space-y-3">
                       {r.features.map((feat, j) => (
                         <li key={j} className="flex items-start gap-2.5 text-sm text-slate-300">
@@ -418,7 +523,7 @@ export const Landing = () => {
                 <Button
                   size="lg"
                   rightIcon={<ArrowRight className="w-5 h-5" />}
-                  onClick={() => navigate('/login')}>
+                  onClick={openRolePicker}>
                   Sign Up Free
                 </Button>
                 <Button

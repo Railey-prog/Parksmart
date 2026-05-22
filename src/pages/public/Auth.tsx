@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
@@ -24,9 +24,13 @@ const slideVariants = {
 };
 
 export const Login = () => {
-  const [mode, setMode] = useState<Mode>('login');
-  const [signupStep, setSignupStep] = useState<SignupStep>('role-pick');
-  const [selectedRole, setSelectedRole] = useState<SignupRole | null>(null);
+  const location = useLocation();
+  const locationState = location.state as { mode?: string; role?: SignupRole } | null;
+
+  // If landing page passed a pre-selected role, jump straight to signup form
+  const [mode, setMode] = useState<Mode>(locationState?.mode === 'signup' ? 'signup' : 'login');
+  const [signupStep, setSignupStep] = useState<SignupStep>(locationState?.role ? 'form' : 'role-pick');
+  const [selectedRole, setSelectedRole] = useState<SignupRole | null>(locationState?.role ?? null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -331,7 +335,6 @@ export const Login = () => {
                   </div>
                 </div>
 
-                {/* Vehicle fields — only for Student/Staff */}
                 {selectedRole === 'USER' && (
                   <>
                     <div>
