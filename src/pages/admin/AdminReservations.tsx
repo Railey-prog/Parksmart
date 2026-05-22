@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParking } from '../../contexts/ParkingContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { Badge } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
 import { StatCard } from '../../components/common/StatCard';
-import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck, ChevronDown, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck, ChevronDown, RefreshCw, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Filter = 'ALL' | 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
@@ -45,17 +44,17 @@ const ActionDropdown = ({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors font-medium"
+        className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 transition-colors font-medium whitespace-nowrap"
       >
         Actions <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden">
           {canApprove && (
             <button
               onClick={() => { onApprove(reservation.id); setOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2.5 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors font-medium"
+              className="flex items-center gap-2 w-full px-4 py-3 text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors font-medium"
             >
               <CheckCheck className="w-3.5 h-3.5" /> Approve Reservation
             </button>
@@ -63,7 +62,7 @@ const ActionDropdown = ({
           {canCancel && (
             <button
               onClick={() => { onCancel(reservation.id); setOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors font-medium border-t border-white/5"
+              className="flex items-center gap-2 w-full px-4 py-3 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors font-medium border-t border-white/5"
             >
               <Ban className="w-3.5 h-3.5" /> Cancel
             </button>
@@ -78,6 +77,7 @@ export const AdminReservations = () => {
   const { reservations, zones, users, cancelReservation, approveReservation, refreshReservations } = useParking();
   const [filter, setFilter] = useState<Filter>('PENDING');
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     refreshReservations();
@@ -88,6 +88,25 @@ export const AdminReservations = () => {
     await refreshReservations();
     setRefreshing(false);
   };
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atTop = el.scrollTop === 0;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
+    const scrollingDown = e.deltaY > 0;
+    const scrollingUp = e.deltaY < 0;
+    if ((scrollingDown && !atBottom) || (scrollingUp && !atTop)) return;
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   const pending = reservations.filter((r) => r.status === 'PENDING');
   const active = reservations.filter((r) => r.status === 'ACTIVE');
@@ -103,28 +122,26 @@ export const AdminReservations = () => {
   const getSlot = (zoneId: string, slotId: string) => getZone(zoneId)?.slots.find((s) => s.id === slotId);
   const getUser = (userId: string) => users.find((u) => u.id === userId);
 
-  const getDurationMins = (start: string, end: string) => {
+  const getDuration = (start: string, end: string) => {
     const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
-    if (mins >= 60) return `${Math.round(mins / 60)}h`;
+    if (mins >= 60) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    }
     return `${mins}m`;
   };
 
-  const handleApprove = (id: string) => {
-    approveReservation(id);
-  };
+  const handleApprove = (id: string) => approveReservation(id);
+  const handleCancel = (id: string) => { cancelReservation(id); toast.success('Reservation cancelled'); };
 
-  const handleCancel = (id: string) => {
-    cancelReservation(id);
-    toast.success('Reservation cancelled');
-  };
-
-  const FILTERS: { key: Filter; label: string; count: number }[] = [
-    { key: 'PENDING', label: 'Pending', count: pending.length },
-    { key: 'ALL', label: 'All', count: reservations.length },
-    { key: 'ACTIVE', label: 'Active', count: active.length },
-    { key: 'EXPIRED', label: 'Expired', count: expired.length },
-    { key: 'CANCELLED', label: 'Cancelled', count: cancelled.length },
-    { key: 'COMPLETED', label: 'Completed', count: completed.length },
+  const FILTERS: { key: Filter; label: string; count: number; color: string }[] = [
+    { key: 'PENDING', label: 'Pending', count: pending.length, color: 'bg-amber-600' },
+    { key: 'ACTIVE', label: 'Active', count: active.length, color: 'bg-emerald-700' },
+    { key: 'EXPIRED', label: 'Expired', count: expired.length, color: 'bg-slate-600' },
+    { key: 'CANCELLED', label: 'Cancelled', count: cancelled.length, color: 'bg-rose-700' },
+    { key: 'COMPLETED', label: 'Completed', count: completed.length, color: 'bg-indigo-600' },
+    { key: 'ALL', label: 'All', count: reservations.length, color: 'bg-indigo-600' },
   ];
 
   return (
@@ -137,7 +154,7 @@ export const AdminReservations = () => {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white border border-white/10 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:text-white border border-white/10 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -162,7 +179,7 @@ export const AdminReservations = () => {
           </div>
           <button
             onClick={() => setFilter('PENDING')}
-            className="shrink-0 text-xs text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 transition-colors"
+            className="shrink-0 text-xs text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2"
           >
             Review now →
           </button>
@@ -171,18 +188,12 @@ export const AdminReservations = () => {
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-1 rounded-xl bg-black/20 border border-white/10 p-1 w-fit">
-        {FILTERS.map(({ key, label, count }) => (
+        {FILTERS.map(({ key, label, count, color }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              filter === key
-                ? key === 'PENDING' ? 'bg-amber-600 text-white shadow'
-                : key === 'ACTIVE' ? 'bg-emerald-700 text-white shadow'
-                : key === 'EXPIRED' ? 'bg-slate-600 text-white shadow'
-                : key === 'CANCELLED' ? 'bg-rose-700 text-white shadow'
-                : 'bg-indigo-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+              filter === key ? `${color} text-white shadow` : 'text-slate-400 hover:text-white'
             }`}
           >
             {label} ({count})
@@ -198,17 +209,37 @@ export const AdminReservations = () => {
         </GlassCard>
       ) : (
         <GlassCard className="p-0 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 border-b border-white/10 text-slate-300">
+          <div
+            ref={scrollRef}
+            className="overflow-x-auto overflow-y-auto"
+            style={{ maxHeight: '520px', cursor: 'default' }}
+          >
+            <table className="text-left text-sm" style={{ minWidth: '900px', width: '100%' }}>
+              <thead className="bg-white/5 border-b border-white/10 text-slate-300 sticky top-0 z-10">
                 <tr>
-                  <th className="p-4 font-medium">User</th>
-                  <th className="p-4 font-medium">Zone / Slot</th>
-                  <th className="p-4 font-medium">Start</th>
-                  <th className="p-4 font-medium">End</th>
-                  <th className="p-4 font-medium">Duration</th>
-                  <th className="p-4 font-medium">Status</th>
-                  <th className="p-4 font-medium"></th>
+                  <th className="p-4 font-semibold whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-indigo-400" /> User
+                    </div>
+                  </th>
+                  <th className="p-4 font-semibold whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-slate-400" /> Zone / Slot
+                    </div>
+                  </th>
+                  <th className="p-4 font-semibold whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" /> Start
+                    </div>
+                  </th>
+                  <th className="p-4 font-semibold whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" /> End
+                    </div>
+                  </th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Duration</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Status</th>
+                  <th className="p-4 font-semibold whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -222,35 +253,48 @@ export const AdminReservations = () => {
                       key={r.id}
                       className={`hover:bg-white/5 transition-colors ${isPending ? 'bg-amber-500/5' : ''}`}
                     >
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 text-xs font-bold shrink-0">
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 text-xs font-bold shrink-0">
                             {owner?.name?.charAt(0) ?? '?'}
                           </div>
-                          <span className="text-white text-sm">{owner?.name ?? 'Unknown'}</span>
+                          <div>
+                            <p className="text-white text-sm font-medium">{owner?.name ?? 'Unknown'}</p>
+                            <p className="text-slate-500 text-xs">{owner?.email ?? ''}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-slate-300">
                           <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                          <span>{zone?.name ?? '—'}</span>
-                          <span className="text-slate-500">·</span>
-                          <span className="font-mono font-semibold text-white">{slot?.name ?? r.slotId}</span>
+                          <span className="text-slate-300">{zone?.name ?? '—'}</span>
+                          <span className="text-slate-600">·</span>
+                          <span className="font-mono font-bold text-white">{slot?.name ?? r.slotId}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-400 font-mono text-xs">
-                        {new Date(r.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <td className="p-4 whitespace-nowrap">
+                        <p className="text-slate-200 text-sm font-medium">
+                          {new Date(r.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-slate-500 text-xs font-mono">
+                          {new Date(r.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </td>
-                      <td className="p-4 text-slate-400 font-mono text-xs">
-                        {new Date(r.endTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <td className="p-4 whitespace-nowrap">
+                        <p className="text-slate-200 text-sm font-medium">
+                          {new Date(r.endTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-slate-500 text-xs font-mono">
+                          {new Date(r.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </td>
-                      <td className="p-4 text-slate-300 font-medium">
-                        {getDurationMins(r.startTime, r.endTime)}
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="text-white font-bold text-sm">{getDuration(r.startTime, r.endTime)}</span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'}>{r.status}</Badge>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap text-right">
                         <ActionDropdown
                           reservation={r}
                           onApprove={handleApprove}
@@ -262,6 +306,10 @@ export const AdminReservations = () => {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="px-4 py-2 border-t border-white/5 bg-white/[0.02] flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {filtered.length} reservation{filtered.length !== 1 ? 's' : ''}</span>
+            <span>Scroll horizontally to see all columns</span>
           </div>
         </GlassCard>
       )}

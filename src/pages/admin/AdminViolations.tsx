@@ -3,7 +3,8 @@ import { useParking } from '../../contexts/ParkingContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusDropdown } from '../../components/common/StatusDropdown';
-import { AlertTriangle, CheckCircle, Car, MapPin, FileText } from 'lucide-react';
+import { Badge } from '../../components/common/Badge';
+import { AlertTriangle, CheckCircle, Car, MapPin, User, FileText, Clock } from 'lucide-react';
 
 type Filter = 'ALL' | 'OPEN' | 'RESOLVED';
 
@@ -104,35 +105,66 @@ export const AdminViolations = () => {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-xs text-slate-500">
+                    {/* Status + timestamp */}
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <Badge variant={v.status === 'OPEN' ? 'danger' : 'success'}>
+                        {v.status}
+                      </Badge>
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
+                        <Clock className="w-3 h-3" />
                         {new Date(v.timestamp).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-white font-medium text-sm mb-2">{v.description}</p>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
-                      <span className="flex items-center gap-1.5">
-                        <Car className="w-3.5 h-3.5" />
-                        <span className="font-mono font-semibold text-slate-300">{v.vehiclePlate || '—'}</span>
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {v.location}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" />
-                        Reported by: {v.reportedByName || v.reportedBy}
-                      </span>
+
+                    {/* Description */}
+                    <p className="text-white font-medium text-sm mb-3">{v.description}</p>
+
+                    {/* Info grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {/* Vehicle */}
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/20 border border-white/5">
+                        <Car className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Vehicle Plate</p>
+                          <p className="font-mono font-bold text-white text-sm">{v.vehiclePlate || '—'}</p>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/20 border border-white/5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Location</p>
+                          <p className="text-white text-sm font-medium">{v.location}</p>
+                        </div>
+                      </div>
+
+                      {/* Reported by officer */}
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                        v.status === 'OPEN'
+                          ? 'bg-indigo-500/10 border-indigo-500/20'
+                          : 'bg-black/20 border-white/5'
+                      }`}>
+                        <User className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wide">Reported By</p>
+                          <p className="text-indigo-300 text-sm font-semibold">
+                            {v.reportedByName || v.reportedBy || 'Security Officer'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Status dropdown */}
-                <StatusDropdown
-                  value={v.status}
-                  options={[{ value: 'OPEN', label: 'OPEN' }, { value: 'RESOLVED', label: 'RESOLVED' }]}
-                  onChange={(val) => updateViolationStatus(v.id, val as 'OPEN' | 'RESOLVED')}
-                />
+                <div className="shrink-0">
+                  <StatusDropdown
+                    value={v.status}
+                    options={[{ value: 'OPEN', label: 'OPEN' }, { value: 'RESOLVED', label: 'RESOLVED' }]}
+                    onChange={(val) => updateViolationStatus(v.id, val as 'OPEN' | 'RESOLVED')}
+                  />
+                </div>
               </div>
             </GlassCard>
           ))}
