@@ -15,6 +15,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
 
 type Tab = 'camera' | 'manual';
+type GateMode = 'entry' | 'exit';
 type VerifyResult = {
   permit: any;
   user: any;
@@ -46,6 +47,7 @@ function formatDuration(minutes: number) {
 export const VerifyPermit = () => {
   const { permits, users, zones, reservations, addLog, reportViolation } = useParking();
   const { user: securityUser } = useAuth();
+  const [gateMode, setGateMode] = useState<GateMode>('entry');
   const [activeTab, setActiveTab] = useState<Tab>('camera');
   const [manualInput, setManualInput] = useState('');
   const [result, setResult] = useState<VerifyResult>(null);
@@ -116,34 +118,37 @@ export const VerifyPermit = () => {
   const applyResult = (res: VerifyResult, scannedPlate?: string) => {
     setResult(res);
     if (!res) return;
+    const isExit = gateMode === 'exit';
 
     if ('error' in res) {
       addLog({
-        type: 'ENTRY',
-        description: `Entry DENIED — permit not found (${scannedPlate || manualInput || 'QR scan'})`,
+        type: isExit ? 'EXIT' : 'ENTRY',
+        description: `${isExit ? 'Exit' : 'Entry'} DENIED — permit not found (${scannedPlate || manualInput || 'QR scan'})`,
         severity: 'WARNING',
       });
       setReportForm((f) => ({ ...f, vehiclePlate: scannedPlate || manualInput || '' }));
-      toast.error('Entry denied — permit not found');
+      toast.error(`${isExit ? 'Exit' : 'Entry'} denied — permit not found`);
     } else if (!res.isValid) {
       addLog({
-        type: 'ENTRY',
-        description: `Entry DENIED — ${res.isExpired ? 'expired' : res.permit.status.toLowerCase()} permit (${res.permit.permitNumber})`,
+        type: isExit ? 'EXIT' : 'ENTRY',
+        description: `${isExit ? 'Exit' : 'Entry'} DENIED — ${res.isExpired ? 'expired' : res.permit.status.toLowerCase()} permit (${res.permit.permitNumber})`,
         vehiclePlate: res.permit.vehiclePlate,
         userId: res.user?.id,
         severity: 'WARNING',
       });
       setReportForm((f) => ({ ...f, vehiclePlate: res.permit.vehiclePlate || '' }));
-      toast.error('Entry denied — invalid permit');
+      toast.error(`${isExit ? 'Exit' : 'Entry'} denied — invalid permit`);
     } else {
       addLog({
-        type: 'ENTRY',
-        description: `Entry ALLOWED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · parked at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`,
+        type: isExit ? 'EXIT' : 'ENTRY',
+        description: isExit
+          ? `Exit CONFIRMED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · was at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`
+          : `Entry ALLOWED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · parked at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`,
         vehiclePlate: res.permit.vehiclePlate,
         userId: res.user?.id,
         severity: 'INFO',
       });
-      toast.success('Entry allowed');
+      toast.success(isExit ? 'Exit confirmed' : 'Entry allowed');
     }
   };
 
@@ -254,35 +259,73 @@ export const VerifyPermit = () => {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-white">Gate Verification</h1>
         <p className="text-slate-400 mt-1">
-          Scan permit QR or enter permit number to allow entry
+          Scan permit QR or enter permit number to verify
         </p>
       </div>
+
+      {/* Gate Mode Toggle */}
+      {!result && (
+        <div className="flex rounded-xl bg-black/30 border border-white/10 p-1 gap-1">
+          <button
+            onClick={() => setGateMode('entry')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              gateMode === 'entry'
+                ? 'bg-emerald-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" /> Entry
+          </button>
+          <button
+            onClick={() => setGateMode('exit')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              gateMode === 'exit'
+                ? 'bg-amber-500 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <ShieldX className="w-4 h-4" /> Exit
+          </button>
+        </div>
+      )}
 
       {/* Result card */}
       {result && (
         <div className={`rounded-2xl border-2 p-6 transition-all ${
           isAllowed
-            ? 'border-emerald-500/60 bg-emerald-500/10'
+            ? gateMode === 'exit' ? 'border-amber-500/60 bg-amber-500/10' : 'border-emerald-500/60 bg-emerald-500/10'
             : 'border-rose-500/60 bg-rose-500/10'
         }`}>
           {/* Gate Status Banner */}
           <div className={`flex items-center justify-center gap-3 mb-6 py-4 rounded-xl ${
-            isAllowed ? 'bg-emerald-500/20' : 'bg-rose-500/20'
+            isAllowed
+              ? gateMode === 'exit' ? 'bg-amber-500/20' : 'bg-emerald-500/20'
+              : 'bg-rose-500/20'
           }`}>
             {isAllowed ? (
-              <>
-                <ShieldCheck className="w-10 h-10 text-emerald-400" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">Gate Status</p>
-                  <p className="text-3xl font-black text-emerald-300">ALLOW ENTRY</p>
-                </div>
-              </>
+              gateMode === 'exit' ? (
+                <>
+                  <ShieldX className="w-10 h-10 text-amber-400" />
+                  <div className="text-left">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">Gate Status</p>
+                    <p className="text-3xl font-black text-amber-300">EXIT CONFIRMED</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-10 h-10 text-emerald-400" />
+                  <div className="text-left">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">Gate Status</p>
+                    <p className="text-3xl font-black text-emerald-300">ALLOW ENTRY</p>
+                  </div>
+                </>
+              )
             ) : (
               <>
                 <ShieldX className="w-10 h-10 text-rose-400" />
                 <div className="text-left">
                   <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">Gate Status</p>
-                  <p className="text-3xl font-black text-rose-300">DENY ENTRY</p>
+                  <p className="text-3xl font-black text-rose-300">{gateMode === 'exit' ? 'DENY EXIT' : 'DENY ENTRY'}</p>
                 </div>
               </>
             )}

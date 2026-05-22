@@ -47,6 +47,7 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, vehiclePlate, vehicleModel } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
+    if (!email.toLowerCase().endsWith('@parksmart.edu')) return res.status(400).json({ error: 'INVALID_DOMAIN' });
 
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) return res.status(409).json({ error: 'EMAIL_EXISTS' });

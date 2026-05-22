@@ -93,6 +93,10 @@ export const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signupEmail.toLowerCase().endsWith('@parksmart.edu')) {
+      toast.error('Only @parksmart.edu email addresses are allowed.');
+      return;
+    }
     if (signupPassword !== signupConfirmPassword) {
       toast.error('Passwords do not match.');
       return;
@@ -119,6 +123,7 @@ export const Login = () => {
     } catch (err: any) {
       const code = err?.message;
       if (code === 'EMAIL_EXISTS') toast.error('An account with that email already exists.');
+      else if (code === 'INVALID_DOMAIN') toast.error('Only @parksmart.edu email addresses are allowed.');
       else toast.error('Registration failed. Please try again.');
     } finally {
       setRegistering(false);
@@ -236,7 +241,7 @@ export const Login = () => {
                   <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="email" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="glass-input w-full pl-10 pr-4" placeholder="your@email.edu" />
+                    <input type="email" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="glass-input w-full pl-10 pr-4" placeholder="your@parksmart.edu" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
