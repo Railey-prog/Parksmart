@@ -5,7 +5,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { DigitalPermit } from '../../components/permits/DigitalPermit';
-import { AlertCircle, Car } from 'lucide-react';
+import { AlertCircle, Clock, XCircle, Car } from 'lucide-react';
 
 export const UserPermit = () => {
   const { user } = useAuth();
@@ -24,6 +24,55 @@ export const UserPermit = () => {
     setShowModal(false);
   };
 
+  const renderPermitState = () => {
+    if (!myPermit) {
+      return (
+        <GlassCard className="text-center py-12">
+          <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">No Active Permit</h3>
+          <p className="text-slate-400 mb-6">
+            You need a parking permit to park on campus. Apply below and an admin will review your request.
+          </p>
+          <Button onClick={() => setShowModal(true)}>Apply for Permit</Button>
+        </GlassCard>
+      );
+    }
+
+    if (myPermit.status === 'PENDING') {
+      return (
+        <GlassCard className="text-center py-12">
+          <Clock className="w-12 h-12 text-indigo-400 mx-auto mb-4 animate-pulse" />
+          <h3 className="text-xl font-bold text-white mb-2">Application Under Review</h3>
+          <p className="text-slate-400 mb-2">
+            Your permit application has been submitted and is awaiting admin approval.
+          </p>
+          <p className="text-xs text-slate-500 mb-6">
+            Permit #{myPermit.permitNumber} · Vehicle: {myPermit.vehiclePlate}
+          </p>
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-sm font-medium">
+            <Clock className="w-4 h-4" />
+            Pending Approval
+          </span>
+        </GlassCard>
+      );
+    }
+
+    if (myPermit.status === 'REVOKED') {
+      return (
+        <GlassCard className="text-center py-12">
+          <XCircle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">Permit Revoked</h3>
+          <p className="text-slate-400 mb-6">
+            Your parking permit has been revoked by an administrator. You may apply for a new one.
+          </p>
+          <Button onClick={() => setShowModal(true)}>Apply for New Permit</Button>
+        </GlassCard>
+      );
+    }
+
+    return <DigitalPermit permit={myPermit} user={user} />;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -32,18 +81,7 @@ export const UserPermit = () => {
       </div>
 
       <div className="max-w-md mx-auto mt-10">
-        {myPermit ? (
-          <DigitalPermit permit={myPermit} user={user} />
-        ) : (
-          <GlassCard className="text-center py-12">
-            <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No Active Permit</h3>
-            <p className="text-slate-400 mb-6">
-              You need a parking permit to park on campus. Apply below and an admin will review your request.
-            </p>
-            <Button onClick={() => setShowModal(true)}>Apply for Permit</Button>
-          </GlassCard>
-        )}
+        {renderPermitState()}
       </div>
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Apply for Parking Permit">
