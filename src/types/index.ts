@@ -64,6 +64,7 @@ export interface Violation {
   id: string;
   timestamp: string;
   reportedBy: string;
+  reportedByName?: string;
   vehiclePlate: string;
   description: string;
   status: 'OPEN' | 'RESOLVED';

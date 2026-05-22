@@ -233,7 +233,6 @@ export const VerifyPermit = ({ initialMode = 'entry' }: { initialMode?: GateMode
       : 'Unauthorized entry — no valid permit detected at gate.';
 
     reportViolation({
-      reportedBy: securityUser?.name ?? 'Security Officer',
       vehiclePlate: reportForm.vehiclePlate.toUpperCase().trim(),
       description,
       location: reportForm.location,

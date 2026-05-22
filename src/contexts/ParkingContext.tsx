@@ -20,7 +20,7 @@ interface ParkingContextType {
   approvePermit: (permitId: string) => void;
   revokePermit: (permitId: string) => void;
   addLog: (log: Omit<LogEntry, 'id' | 'timestamp'>) => void;
-  reportViolation: (violation: Omit<Violation, 'id' | 'timestamp' | 'status'>) => void;
+  reportViolation: (violation: Omit<Violation, 'id' | 'timestamp' | 'status' | 'reportedBy' | 'reportedByName'>) => void;
   resolveViolation: (violationId: string) => void;
   updateViolationStatus: (violationId: string, status: 'OPEN' | 'RESOLVED') => void;
   updateUserStatus: (userId: string, status: 'APPROVED' | 'REJECTED') => void;

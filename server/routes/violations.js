@@ -6,6 +6,7 @@ const toViolation = (v) => ({
   id: v.id,
   timestamp: v.timestamp,
   reportedBy: v.reported_by,
+  reportedByName: v.reported_by_name || v.reported_by,
   vehiclePlate: v.vehicle_plate,
   description: v.description,
   status: v.status,
@@ -14,23 +15,36 @@ const toViolation = (v) => ({
 
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM violations ORDER BY timestamp DESC');
+    const { rows } = await pool.query(`
+      SELECT v.*, u.name AS reported_by_name
+      FROM violations v
+      LEFT JOIN users u ON u.id = v.reported_by
+      ORDER BY v.timestamp DESC
+    `);
     res.json(rows.map(toViolation));
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { reportedBy, vehiclePlate, description, location } = req.body;
+    const { vehiclePlate, description, location } = req.body;
+    const reportedBy = req.user.id;
     const id = `v_${Date.now()}`;
     const { rows } = await pool.query(
       `INSERT INTO violations (id, timestamp, reported_by, vehicle_plate, description, status, location)
        VALUES ($1, NOW(), $2, $3, $4, 'OPEN', $5) RETURNING *`,
       [id, reportedBy, vehiclePlate, description, location]
     );
-    res.status(201).json(toViolation(rows[0]));
+    const { rows: joined } = await pool.query(`
+      SELECT v.*, u.name AS reported_by_name
+      FROM violations v
+      LEFT JOIN users u ON u.id = v.reported_by
+      WHERE v.id = $1
+    `, [rows[0].id]);
+    res.status(201).json(toViolation(joined[0]));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

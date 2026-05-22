@@ -38,7 +38,7 @@ export const SecurityReports = () => {
   });
 
   const myReports = violations
-    .filter((v) => v.reportedBy === user?.name)
+    .filter((v) => v.reportedBy === user?.id)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const open = myReports.filter((v) => v.status === 'OPEN');
@@ -57,7 +57,6 @@ export const SecurityReports = () => {
       : form.violationType;
 
     reportViolation({
-      reportedBy: user?.name ?? 'Security Officer',
       vehiclePlate: form.vehiclePlate.toUpperCase().trim(),
       description,
       location: form.location,

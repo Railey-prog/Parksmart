@@ -121,7 +121,7 @@ export const AdminViolations = () => {
                       </span>
                       <span className="flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5" />
-                        Reported by: {v.reportedBy}
+                        Reported by: {v.reportedByName || v.reportedBy}
                       </span>
                     </div>
                   </div>
