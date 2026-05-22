@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `u_${Date.now()}`,
       name: userData.name || 'New User',
       email: userData.email || '',
-      role: 'USER',
+      role: userData.role || 'USER',
       status: 'PENDING',
       vehiclePlate: userData.vehiclePlate,
       vehicleModel: userData.vehicleModel
