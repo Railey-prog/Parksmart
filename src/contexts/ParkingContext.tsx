@@ -201,8 +201,12 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const target = users.find((u) => u.id === id);
     if (target?.role === 'ADMIN') { toast.error('Admin accounts cannot be deleted'); return; }
     setUsers((prev) => prev.filter((u) => u.id !== id));
-    api.deleteUser(id).catch(() => {});
-    toast.success('User deleted');
+    api.deleteUser(id).then(() => {
+      toast.success('User deleted');
+    }).catch(() => {
+      if (target) setUsers((prev) => [...prev, target]);
+      toast.error('Failed to delete user');
+    });
   }, [users]);
 
   const createZone = useCallback((zone: Omit<Zone, 'id' | 'slots'>) => {

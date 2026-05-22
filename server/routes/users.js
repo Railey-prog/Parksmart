@@ -98,15 +98,29 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
 });
 
 router.delete('/:id', requireAdmin, async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const userCheck = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
+    const userCheck = await client.query('SELECT role FROM users WHERE id = $1', [id]);
     if (!userCheck.rows.length) return res.status(404).json({ error: 'Not found' });
     if (userCheck.rows[0].role === 'ADMIN') return res.status(403).json({ error: 'Cannot delete admin' });
-    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    await client.query('BEGIN');
+    await client.query('DELETE FROM notifications WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM logs WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM reservations WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM permits WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM violations WHERE reported_by = $1', [id]);
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    await client.query('COMMIT');
+
     res.json({ success: true });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
+  } finally {
+    client.release();
   }
 });
 
