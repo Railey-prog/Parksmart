@@ -325,6 +325,57 @@ export const Landing = () => {
             <Chip>Smart Campus Initiative 2026</Chip>
           </motion.div>
 
+          {/* SVG watermark behind title */}
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center -z-10">
+              <svg
+                viewBox="0 0 480 480"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-[420px] md:w-[600px] opacity-[0.07] text-indigo-400"
+              >
+                {/* Outer ring */}
+                <circle cx="240" cy="240" r="232" stroke="currentColor" strokeWidth="1.5" />
+                {/* Dashed middle ring */}
+                <circle cx="240" cy="240" r="200" stroke="currentColor" strokeWidth="1" strokeDasharray="10 7" />
+                {/* Solid inner ring */}
+                <circle cx="240" cy="240" r="168" stroke="currentColor" strokeWidth="2" />
+                {/* Inner fill */}
+                <circle cx="240" cy="240" r="155" fill="currentColor" fillOpacity="0.12" />
+
+                {/* Cardinal tick marks */}
+                <line x1="240" y1="4" x2="240" y2="24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <line x1="240" y1="456" x2="240" y2="476" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <line x1="4" y1="240" x2="24" y2="240" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <line x1="456" y1="240" x2="476" y2="240" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+
+                {/* Diagonal tick marks */}
+                <line x1="74" y1="74" x2="88" y2="88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="406" y1="74" x2="392" y2="88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="74" y1="406" x2="88" y2="392" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="406" y1="406" x2="392" y2="392" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+
+                {/* "P" letterform */}
+                <text
+                  x="240"
+                  y="310"
+                  textAnchor="middle"
+                  fontSize="200"
+                  fontWeight="900"
+                  fontFamily="system-ui, sans-serif"
+                  fill="currentColor"
+                  fillOpacity="0.9"
+                  letterSpacing="-8"
+                >P</text>
+
+                {/* Corner accent dots */}
+                <circle cx="240" cy="36" r="5" fill="currentColor" fillOpacity="0.8" />
+                <circle cx="240" cy="444" r="5" fill="currentColor" fillOpacity="0.8" />
+                <circle cx="36" cy="240" r="5" fill="currentColor" fillOpacity="0.8" />
+                <circle cx="444" cy="240" r="5" fill="currentColor" fillOpacity="0.8" />
+              </svg>
+            </div>
+
           <motion.h1
             {...fadeUp(0.1)}
             className="mt-6 text-5xl md:text-7xl font-extrabold text-white leading-[1.08] tracking-tight">
@@ -333,6 +384,7 @@ export const Landing = () => {
               Reimagined
             </span>
           </motion.h1>
+          </div>
 
           <motion.p
             {...fadeUp(0.2)}
