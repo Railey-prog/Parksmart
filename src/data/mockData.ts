@@ -267,13 +267,27 @@ export const analyticsData = {
   { time: '8 PM', demand: 15 }],
 
   weeklyTrend: [
-  { day: 'Mon', occupancy: 75 },
-  { day: 'Tue', occupancy: 82 },
-  { day: 'Wed', occupancy: 88 },
-  { day: 'Thu', occupancy: 85 },
-  { day: 'Fri', occupancy: 60 },
-  { day: 'Sat', occupancy: 20 },
-  { day: 'Sun', occupancy: 15 }],
+  { label: 'Mon', occupancy: 75 },
+  { label: 'Tue', occupancy: 82 },
+  { label: 'Wed', occupancy: 88 },
+  { label: 'Thu', occupancy: 85 },
+  { label: 'Fri', occupancy: 60 },
+  { label: 'Sat', occupancy: 20 },
+  { label: 'Sun', occupancy: 15 }],
+
+  monthlyTrend: [
+  { label: 'Jan', occupancy: 55 },
+  { label: 'Feb', occupancy: 60 },
+  { label: 'Mar', occupancy: 72 },
+  { label: 'Apr', occupancy: 78 },
+  { label: 'May', occupancy: 85 },
+  { label: 'Jun', occupancy: 68 },
+  { label: 'Jul', occupancy: 45 },
+  { label: 'Aug', occupancy: 50 },
+  { label: 'Sep', occupancy: 80 },
+  { label: 'Oct', occupancy: 88 },
+  { label: 'Nov', occupancy: 75 },
+  { label: 'Dec', occupancy: 40 }],
 
   zoneUtilization: [
   { name: 'North', value: 85 },

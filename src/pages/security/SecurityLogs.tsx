@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { useParking } from '../../contexts/ParkingContext';
 import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
@@ -8,7 +7,6 @@ import { Badge } from '../../components/common/Badge';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 export const SecurityLogs = () => {
-  const { user } = useAuth();
   const { logs, addLog } = useParking();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({

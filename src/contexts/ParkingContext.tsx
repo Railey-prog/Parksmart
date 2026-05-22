@@ -62,6 +62,7 @@ interface ParkingContextType {
   slot: Omit<Slot, 'id' | 'zoneId' | 'status'>)
   => void;
   deleteSlot: (zoneId: string, slotId: string) => void;
+  requestPermit: (userId: string, vehiclePlate: string, vehicleModel?: string) => void;
   resetData: () => void;
 }
 const ParkingContext = createContext<ParkingContextType | undefined>(undefined);
@@ -491,6 +492,25 @@ export const ParkingProvider: React.FC<{
     );
     toast.success('Slot deleted');
   }, []);
+  const requestPermit = useCallback((userId: string, vehiclePlate: string, vehicleModel?: string) => {
+    setPermits((prev) => {
+      if (prev.some((p) => p.userId === userId && (p.status === 'ACTIVE' || p.status === 'PENDING'))) {
+        toast.error('You already have an active or pending permit');
+        return prev;
+      }
+      const newPermit: Permit = {
+        id: `p_${Date.now()}`,
+        userId,
+        permitNumber: `PRM-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+        vehiclePlate,
+        issueDate: new Date().toISOString(),
+        expiryDate: new Date(new Date().getFullYear(), 11, 31, 23, 59, 59).toISOString(),
+        status: 'PENDING'
+      };
+      toast.success('Permit application submitted for admin review');
+      return [...prev, newPermit];
+    });
+  }, []);
   const resetData = useCallback(() => {
     clearAllStorage();
     setZones(mockZones);
@@ -527,6 +547,7 @@ export const ParkingProvider: React.FC<{
         deleteZone,
         createSlot,
         deleteSlot,
+        requestPermit,
         resetData
       }}>
       
