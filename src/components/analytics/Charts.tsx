@@ -4,9 +4,18 @@ import {
   ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { GlassCard } from '../common/GlassCard';
-import { analyticsData } from '../../data/mockData';
 
 type Period = 'Daily' | 'Weekly' | 'Monthly';
+
+interface ChartDataPoint {
+  label: string;
+  value: number;
+}
+
+interface ZoneDataPoint {
+  name: string;
+  value: number;
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -25,14 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const PeakHoursChart = ({ period = 'Weekly' }: { period?: Period }) => {
-  const data =
-    period === 'Daily'
-      ? analyticsData.hourlyDemand.map((d) => ({ label: d.time, value: d.demand }))
-      : period === 'Monthly'
-      ? analyticsData.monthlyTrend.map((d) => ({ label: d.label, value: d.occupancy }))
-      : analyticsData.weeklyTrend.map((d) => ({ label: d.label, value: d.occupancy }));
-
+export const PeakHoursChart = ({ period = 'Weekly', data }: { period?: Period; data: ChartDataPoint[] }) => {
   const title =
     period === 'Daily' ? 'Peak Hours Demand (Today)' :
     period === 'Monthly' ? 'Monthly Demand Overview' :
@@ -56,14 +58,7 @@ export const PeakHoursChart = ({ period = 'Weekly' }: { period?: Period }) => {
   );
 };
 
-export const OccupancyTrend = ({ period = 'Weekly' }: { period?: Period }) => {
-  const data =
-    period === 'Daily'
-      ? analyticsData.hourlyDemand.map((d) => ({ label: d.time, value: d.demand }))
-      : period === 'Monthly'
-      ? analyticsData.monthlyTrend.map((d) => ({ label: d.label, value: d.occupancy }))
-      : analyticsData.weeklyTrend.map((d) => ({ label: d.label, value: d.occupancy }));
-
+export const OccupancyTrend = ({ period = 'Weekly', data }: { period?: Period; data: ChartDataPoint[] }) => {
   const title =
     period === 'Daily' ? 'Occupancy Trend (Today)' :
     period === 'Monthly' ? 'Monthly Occupancy Trend' :
@@ -93,18 +88,18 @@ export const OccupancyTrend = ({ period = 'Weekly' }: { period?: Period }) => {
   );
 };
 
-export const ZoneUtilization = () => {
+export const ZoneUtilization = ({ data }: { data: ZoneDataPoint[] }) => {
   return (
     <GlassCard className="h-80 flex flex-col">
       <h3 className="text-lg font-semibold mb-4">Zone Utilization</h3>
       <div className="flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={analyticsData.zoneUtilization}
+            data={data}
             layout="vertical"
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
-            <XAxis type="number" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+            <XAxis type="number" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
             <YAxis dataKey="name" type="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} width={60} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff05' }} />
             <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={24} />
