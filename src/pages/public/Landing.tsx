@@ -17,8 +17,7 @@ import {
   Lock,
   FileText,
   GraduationCap,
-  X,
-  ChevronRight
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -90,63 +89,31 @@ const RolePickerModal = ({
         </div>
 
         {/* Role Cards */}
-        <div className="p-6 grid sm:grid-cols-2 gap-4">
-          {/* Student / Staff */}
+        <div className="p-6 space-y-3">
           <button
             onClick={() => onSelect('USER')}
-            className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-all text-left focus:outline-none">
-            {/* Image */}
-            <div className="h-40 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"
-                alt="Students"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            className="w-full flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500/10 hover:border-indigo-500/40 transition-all group text-left">
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/25 transition-colors shrink-0">
+              <GraduationCap className="w-6 h-6" />
             </div>
-            {/* Content */}
-            <div className="relative p-4 bg-slate-900 group-hover:bg-indigo-950/40 transition-colors">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-white">Student / Staff</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Reserve slots, apply for permits & manage your vehicle.
+            <div>
+              <p className="text-sm font-semibold text-white">Student / Staff</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Reserve parking slots, apply for permits, manage your vehicle.
               </p>
             </div>
           </button>
 
-          {/* Security Officer */}
           <button
             onClick={() => onSelect('SECURITY')}
-            className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/50 transition-all text-left focus:outline-none">
-            {/* Image */}
-            <div className="h-40 overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=600&auto=format&fit=crop"
-                alt="Security"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-75"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            className="w-full flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all group text-left">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/25 transition-colors shrink-0">
+              <ShieldCheck className="w-6 h-6" />
             </div>
-            {/* Content */}
-            <div className="relative p-4 bg-slate-900 group-hover:bg-amber-950/30 transition-colors">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-white">Security Officer</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Verify permits, log violations & monitor campus activity.
+            <div>
+              <p className="text-sm font-semibold text-white">Security Officer</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Verify permits, log violations, and monitor campus parking activity.
               </p>
             </div>
           </button>
