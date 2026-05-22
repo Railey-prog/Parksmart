@@ -20,7 +20,7 @@ app.use(express.json());
 
 app.use((req, res, next) => {
   if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method)) {
-    const entity = Object.entries(ENTITY_MAP).find(([prefix]) => req.path.startsWith(prefix.replace('/api', '')))?.[1];
+    const entity = Object.entries(ENTITY_MAP).find(([prefix]) => req.path.startsWith(prefix))?.[1];
     if (entity) {
       const originalJson = res.json.bind(res);
       res.json = function (data) {
