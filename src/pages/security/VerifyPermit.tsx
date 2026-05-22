@@ -6,9 +6,10 @@ import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import {
-  QrCode, Search, CheckCircle, XCircle, Camera,
+  QrCode, Search, XCircle, Camera,
   KeyboardIcon, RotateCcw, Car, User as UserIcon,
-  Calendar, ShieldCheck, ShieldX, Loader2, AlertTriangle, MapPin, FileText
+  Calendar, ShieldCheck, ShieldX, Loader2, AlertTriangle, MapPin, FileText,
+  Clock, ParkingSquare, Timer
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
@@ -19,12 +20,31 @@ type VerifyResult = {
   user: any;
   isValid: boolean;
   isExpired: boolean;
+  activeReservation?: {
+    id: string;
+    zoneName: string;
+    slotName: string;
+    startTime: string;
+    endTime: string;
+    durationMinutes: number;
+  };
 } | { error: string } | null;
 
 const ZONES = ['Main Entrance', 'Zone A', 'Zone B', 'Zone C', 'Zone D', 'Visitor Lot', 'Staff Lot'];
 
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDuration(minutes: number) {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
 export const VerifyPermit = () => {
-  const { permits, users, addLog, reportViolation } = useParking();
+  const { permits, users, zones, reservations, addLog, reportViolation } = useParking();
   const { user: securityUser } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('camera');
   const [manualInput, setManualInput] = useState('');
@@ -33,7 +53,6 @@ export const VerifyPermit = () => {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Report modal state
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportForm, setReportForm] = useState({
     vehiclePlate: '',
@@ -53,16 +72,45 @@ export const VerifyPermit = () => {
     } catch {
       // Not JSON — treat as raw permit number
     }
+
     const permit = permits.find(
       (p) => p.permitNumber === lookupNum || p.id === lookupNum
     );
-    if (permit) {
-      const owner = users.find((u) => u.id === permit.userId);
-      const isExpired = new Date(permit.expiryDate) < new Date();
-      const isValid = permit.status === 'ACTIVE' && !isExpired;
-      return { permit, user: owner, isValid, isExpired };
+
+    if (!permit) return { error: 'Permit not found' };
+
+    const owner = users.find((u) => u.id === permit.userId);
+    const isExpired = new Date(permit.expiryDate) < new Date();
+    const isValid = permit.status === 'ACTIVE' && !isExpired;
+
+    // Find active reservation for this permit holder
+    const now = new Date();
+    const activeRes = reservations.find(
+      (r) =>
+        r.userId === permit.userId &&
+        r.status === 'ACTIVE' &&
+        new Date(r.startTime) <= now &&
+        new Date(r.endTime) >= now
+    );
+
+    let activeReservation;
+    if (activeRes) {
+      const zone = zones.find((z) => z.id === activeRes.zoneId);
+      const slot = zone?.slots.find((s) => s.id === activeRes.slotId);
+      const start = new Date(activeRes.startTime);
+      const end = new Date(activeRes.endTime);
+      const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+      activeReservation = {
+        id: activeRes.id,
+        zoneName: zone?.name ?? activeRes.zoneId,
+        slotName: slot?.name ?? activeRes.slotId,
+        startTime: activeRes.startTime,
+        endTime: activeRes.endTime,
+        durationMinutes,
+      };
     }
-    return { error: 'Permit not found' };
+
+    return { permit, user: owner, isValid, isExpired, activeReservation };
   };
 
   const applyResult = (res: VerifyResult, scannedPlate?: string) => {
@@ -75,7 +123,6 @@ export const VerifyPermit = () => {
         description: `Entry DENIED — permit not found (${scannedPlate || manualInput || 'QR scan'})`,
         severity: 'WARNING',
       });
-      // Pre-fill plate in report form if we have it
       setReportForm((f) => ({ ...f, vehiclePlate: scannedPlate || manualInput || '' }));
       toast.error('Entry denied — permit not found');
     } else if (!res.isValid) {
@@ -91,7 +138,7 @@ export const VerifyPermit = () => {
     } else {
       addLog({
         type: 'ENTRY',
-        description: `Entry ALLOWED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}`,
+        description: `Entry ALLOWED — permit verified (${res.permit.permitNumber}) for ${res.user?.name ?? 'unknown'}${res.activeReservation ? ` · parked at ${res.activeReservation.zoneName} slot ${res.activeReservation.slotName}` : ''}`,
         vehiclePlate: res.permit.vehiclePlate,
         userId: res.user?.id,
         severity: 'INFO',
@@ -246,7 +293,8 @@ export const VerifyPermit = () => {
               <p className="text-slate-300 text-sm">{result.error}</p>
             </div>
           ) : (
-            <div className="space-y-3 mb-4">
+            <div className="space-y-4 mb-4">
+              {/* Permit Info */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-black/20 p-3 rounded-xl border border-white/5">
                   <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
@@ -275,7 +323,57 @@ export const VerifyPermit = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between px-1 pt-1">
+
+              {/* Active Reservation Block */}
+              {result.activeReservation ? (
+                <div className="rounded-xl border border-indigo-500/40 bg-indigo-500/10 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ParkingSquare className="w-4 h-4 text-indigo-400" />
+                    <p className="text-sm font-semibold text-indigo-300 uppercase tracking-wide">Active Reservation</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5 col-span-2">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
+                        <MapPin className="w-3 h-3" /> Parking Area
+                      </div>
+                      <p className="font-bold text-white">{result.activeReservation.zoneName}</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5 col-span-2">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
+                        <ParkingSquare className="w-3 h-3" /> Slot
+                      </div>
+                      <p className="font-mono font-bold text-white text-lg">{result.activeReservation.slotName}</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
+                        <Clock className="w-3 h-3" /> Start
+                      </div>
+                      <p className="font-bold text-white">{formatTime(result.activeReservation.startTime)}</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
+                        <Clock className="w-3 h-3" /> End
+                      </div>
+                      <p className="font-bold text-white">{formatTime(result.activeReservation.endTime)}</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-xl border border-white/5 col-span-2">
+                      <div className="flex items-center gap-1.5 text-slate-400 mb-1 text-xs">
+                        <Timer className="w-3 h-3" /> Duration
+                      </div>
+                      <p className="font-bold text-white">{formatDuration(result.activeReservation.durationMinutes)}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                isAllowed && (
+                  <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-3 flex items-center gap-3">
+                    <ParkingSquare className="w-4 h-4 text-slate-500 shrink-0" />
+                    <p className="text-xs text-slate-500">No active reservation at this time — permit valid for general entry.</p>
+                  </div>
+                )
+              )}
+
+              <div className="flex items-center justify-between px-1">
                 <Badge variant={result.isValid ? 'success' : 'danger'}>
                   {result.isExpired ? 'EXPIRED' : result.permit.status}
                 </Badge>
