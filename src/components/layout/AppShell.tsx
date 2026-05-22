@@ -46,6 +46,7 @@ export const AppShell: React.FC<{
         { label: 'Users', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
         { label: 'Zones & Slots', path: '/admin/zones', icon: <MapPin className="w-5 h-5" /> },
         { label: 'Permits', path: '/admin/permits', icon: <ShieldCheck className="w-5 h-5" /> },
+        { label: 'Reservations', path: '/admin/reservations', icon: <Calendar className="w-5 h-5" /> },
         { label: 'Parking Activity', path: '/admin/logs', icon: <FileText className="w-5 h-5" /> },
         { label: 'Violations', path: '/admin/violations', icon: <AlertTriangle className="w-5 h-5" /> },
         { label: 'Reports & Stats', path: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> }];

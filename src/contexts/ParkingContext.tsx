@@ -245,11 +245,14 @@ export const ParkingProvider: React.FC<{
         userId,
         severity: 'INFO'
       });
-      toast.success('Reservation Confirmed', {
-        description: `Your slot is reserved until ${endTime.toLocaleTimeString()}`
+      addNotification({
+        userId,
+        title: 'Reservation Confirmed',
+        message: `Your parking slot is reserved until ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Check your dashboard for details.`,
+        type: 'SUCCESS',
       });
     },
-    []
+    [addNotification]
   );
   const cancelReservation = useCallback((reservationId: string) => {
     setReservations((prev) => {
@@ -274,6 +277,12 @@ export const ParkingProvider: React.FC<{
         )
         );
         toast.success('Reservation Cancelled');
+        addNotification({
+          userId: res.userId,
+          title: 'Reservation Cancelled',
+          message: 'Your parking reservation has been cancelled and the slot is now available.',
+          type: 'WARNING',
+        });
         return prev.map((r) =>
         r.id === reservationId ?
         {
@@ -285,7 +294,7 @@ export const ParkingProvider: React.FC<{
       }
       return prev;
     });
-  }, []);
+  }, [addNotification]);
   const updateSlotStatus = useCallback(
     (zoneId: string, slotId: string, status: SlotStatus) => {
       setZones((prev) =>
