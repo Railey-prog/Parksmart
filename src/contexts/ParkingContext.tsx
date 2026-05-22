@@ -72,6 +72,24 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }).finally(() => setLoading(false));
   }, []);
 
+  // SSE real-time updates
+  useEffect(() => {
+    if (!localStorage.getItem('parksmart_token')) return;
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => {
+      try {
+        const { entity } = JSON.parse(e.data);
+        if (entity === 'zones') api.getZones().then(setZones).catch(() => {});
+        else if (entity === 'reservations') api.getReservations().then(setReservations).catch(() => {});
+        else if (entity === 'permits') api.getPermits().then(setPermits).catch(() => {});
+        else if (entity === 'logs') api.getLogs().then(setLogs).catch(() => {});
+        else if (entity === 'violations') api.getViolations().then(setViolations).catch(() => {});
+        else if (entity === 'users') api.getUsers().then(setUsers).catch(() => {});
+      } catch {}
+    };
+    return () => es.close();
+  }, []);
+
   // Reservation expiry check
   useEffect(() => {
     const interval = setInterval(() => {

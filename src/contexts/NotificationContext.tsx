@@ -24,6 +24,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       .catch(() => {});
   }, []);
 
+  // SSE real-time updates for notifications
+  useEffect(() => {
+    if (!localStorage.getItem('parksmart_token')) return;
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => {
+      try {
+        const { entity } = JSON.parse(e.data);
+        if (entity === 'notifications') {
+          api.getNotifications().then(setNotifications).catch(() => {});
+        }
+      } catch {}
+    };
+    return () => es.close();
+  }, []);
+
   const getNotificationsForRole = useCallback((role: string): Notification[] =>
     notifications.filter((n) => n.targetRole === 'ALL' || n.targetRole === role),
     [notifications]

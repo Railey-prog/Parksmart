@@ -2,10 +2,48 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const pool = require('./db');
+const { addClient, broadcast } = require('./broadcaster');
+
+const ENTITY_MAP = {
+  '/api/users': 'users',
+  '/api/zones': 'zones',
+  '/api/reservations': 'reservations',
+  '/api/permits': 'permits',
+  '/api/violations': 'violations',
+  '/api/notifications': 'notifications',
+  '/api/logs': 'logs',
+};
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method)) {
+    const entity = Object.entries(ENTITY_MAP).find(([prefix]) => req.path.startsWith(prefix.replace('/api', '')))?.[1];
+    if (entity) {
+      const originalJson = res.json.bind(res);
+      res.json = function (data) {
+        const result = originalJson(data);
+        if (res.statusCode >= 200 && res.statusCode < 300) broadcast(entity);
+        return result;
+      };
+    }
+  }
+  next();
+});
+
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  addClient(res);
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(heartbeat); }
+  }, 20000);
+  res.on('close', () => clearInterval(heartbeat));
+});
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
