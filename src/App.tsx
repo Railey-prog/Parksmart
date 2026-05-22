@@ -10,6 +10,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ParkingProvider } from './contexts/ParkingContext';
 import { AppShell } from './components/layout/AppShell';
 import { Login } from './pages/public/Auth';
+import { Landing } from './pages/public/Landing';
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminUsers } from './pages/admin/AdminUsers';
@@ -53,7 +54,13 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/"
+        element={
+          <PublicOnlyRoute>
+            <Landing />
+          </PublicOnlyRoute>
+        } />
       <Route
         path="/login"
         element={
