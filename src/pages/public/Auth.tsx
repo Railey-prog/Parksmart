@@ -5,7 +5,8 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import {
   MapPin, Mail, Lock, User, Car, Layers,
-  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2
+  GraduationCap, ShieldCheck, ArrowLeft, CheckCircle2,
+  Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockUsers } from '../../data/mockData';
@@ -34,11 +35,14 @@ export const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showSignupConfirm, setShowSignupConfirm] = useState(false);
   const [signupPlate, setSignupPlate] = useState('');
   const [signupModel, setSignupModel] = useState('');
 
@@ -190,12 +194,18 @@ export const Login = () => {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="glass-input w-full pl-10 pr-4"
+                    className="glass-input w-full pl-10 pr-10"
                     placeholder="••••••••" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
               <Button type="submit" className="w-full mt-6">Sign In</Button>
@@ -312,12 +322,18 @@ export const Login = () => {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
-                        type="password"
+                        type={showSignupPassword ? 'text' : 'password'}
                         required
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
-                        className="glass-input w-full pl-9 pr-3"
+                        className="glass-input w-full pl-9 pr-8"
                         placeholder="••••••••" />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPassword((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                        {showSignupPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
                     </div>
                   </div>
                   <div>
@@ -325,12 +341,18 @@ export const Login = () => {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input
-                        type="password"
+                        type={showSignupConfirm ? 'text' : 'password'}
                         required
                         value={signupConfirmPassword}
                         onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                        className="glass-input w-full pl-9 pr-3"
+                        className="glass-input w-full pl-9 pr-8"
                         placeholder="••••••••" />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupConfirm((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                        {showSignupConfirm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
                     </div>
                   </div>
                 </div>
