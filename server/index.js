@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const pool = require('./db');
 
 const app = express();
@@ -17,7 +18,17 @@ app.use('/api/logs', require('./routes/logs'));
 
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
-const PORT = process.env.API_PORT || 3001;
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '..', 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (_, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+const PORT = process.env.NODE_ENV === 'production'
+  ? (process.env.PORT || 5000)
+  : (process.env.API_PORT || 3001);
 
 const seed = require('./seed');
 
