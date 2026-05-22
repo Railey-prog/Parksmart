@@ -4,7 +4,7 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { StatCard } from '../../components/common/StatCard';
-import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, MapPin, Ban, CheckCheck, ChevronDown, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Filter = 'ALL' | 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'COMPLETED';
@@ -75,8 +75,19 @@ const ActionDropdown = ({
 };
 
 export const AdminReservations = () => {
-  const { reservations, zones, users, cancelReservation, approveReservation } = useParking();
+  const { reservations, zones, users, cancelReservation, approveReservation, refreshReservations } = useParking();
   const [filter, setFilter] = useState<Filter>('PENDING');
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    refreshReservations();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshReservations();
+    setRefreshing(false);
+  };
 
   const pending = reservations.filter((r) => r.status === 'PENDING');
   const active = reservations.filter((r) => r.status === 'ACTIVE');
@@ -104,7 +115,7 @@ export const AdminReservations = () => {
 
   const handleCancel = (id: string) => {
     cancelReservation(id);
-    toast.success('Reservation cancelled by admin');
+    toast.success('Reservation cancelled');
   };
 
   const FILTERS: { key: Filter; label: string; count: number }[] = [
@@ -118,9 +129,19 @@ export const AdminReservations = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Reservations</h1>
-        <p className="text-slate-400 mt-1">All parking reservations across campus</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Reservations</h1>
+          <p className="text-slate-400 mt-1">All parking reservations across campus</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white border border-white/10 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Stats */}

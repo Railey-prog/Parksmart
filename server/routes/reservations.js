@@ -61,7 +61,7 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     const reservation = rows[0];
-    if (reservation.status === 'ACTIVE') {
+    if (reservation.status === 'ACTIVE' || reservation.status === 'PENDING') {
       await pool.query('UPDATE slots SET status = $1 WHERE id = $2', ['AVAILABLE', reservation.slot_id]);
     }
     await pool.query('UPDATE reservations SET status = $1 WHERE id = $2', ['CANCELLED', req.params.id]);

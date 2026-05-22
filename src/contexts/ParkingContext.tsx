@@ -12,6 +12,7 @@ interface ParkingContextType {
   violations: Violation[];
   users: User[];
   loading: boolean;
+  refreshReservations: () => Promise<void>;
   reserveSlot: (userId: string, zoneId: string, slotId: string, durationMinutes: number) => void;
   cancelReservation: (reservationId: string) => void;
   updateSlotStatus: (zoneId: string, slotId: string, status: SlotStatus) => void;
@@ -143,13 +144,12 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const res = reservations.find((r) => r.id === reservationId);
     if (!res) return;
     setReservations((prev) => prev.map((r) => r.id === reservationId ? { ...r, status: 'CANCELLED' } : r));
-    if (res.status === 'ACTIVE') {
+    if (res.status === 'ACTIVE' || res.status === 'PENDING') {
       setZones((zPrev) => zPrev.map((z) => z.id === res.zoneId
         ? { ...z, slots: z.slots.map((s) => s.id === res.slotId ? { ...s, status: 'AVAILABLE' } : s) }
         : z));
     }
     api.cancelReservation(reservationId).catch(() => {});
-    toast.success('Reservation Cancelled');
     addNotification({ userId: res.userId, title: 'Reservation Cancelled', message: 'Your parking reservation has been cancelled.', type: 'WARNING', targetRole: 'USER' });
   }, [reservations, addNotification]);
 
@@ -288,6 +288,15 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   }, [permits, addNotification]);
 
+  const refreshReservations = useCallback(async () => {
+    try {
+      const data = await api.getReservations();
+      setReservations(data);
+    } catch {
+      toast.error('Failed to refresh reservations');
+    }
+  }, []);
+
   const resetData = useCallback(() => {
     toast.info('Reload the page to re-seed data from the database.');
   }, []);
@@ -295,7 +304,7 @@ export const ParkingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <ParkingContext.Provider value={{
       zones, reservations, permits, logs, violations, users, loading,
-      reserveSlot, cancelReservation, updateSlotStatus,
+      refreshReservations, reserveSlot, cancelReservation, updateSlotStatus,
       approveReservation, approvePermit, revokePermit, addLog, reportViolation, resolveViolation,
       updateUserStatus, createUser, updateUser, deleteUser,
       createZone, updateZone, deleteZone, createSlot, deleteSlot,
