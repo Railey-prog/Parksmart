@@ -5,6 +5,9 @@ import { GlassCard } from '../../components/common/GlassCard';
 import { Button } from '../../components/common/Button';
 import { MapPin, Mail, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { mockUsers } from '../../data/mockData';
+import { loadFromStorage } from '../../lib/storage';
+import { User } from '../../types';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,15 +19,22 @@ export const Login = () => {
     e.preventDefault();
     try {
       login(email);
+      let matched = mockUsers.find((u) => u.email === email);
+      if (!matched) {
+        const persisted = loadFromStorage<User[]>('users', mockUsers);
+        matched = persisted.find((u) => u.email === email);
+      }
       toast.success('Logged in successfully');
-      navigate('/admin');
+      if (matched?.role === 'ADMIN') navigate('/admin');
+      else if (matched?.role === 'SECURITY') navigate('/security');
+      else navigate('/user');
     } catch (err: any) {
       if (err?.message === 'PENDING') {
-        toast.error('Your account is awaiting approval.');
+        toast.error('Your account is awaiting admin approval.');
       } else if (err?.message === 'REJECTED') {
         toast.error('Your account has been rejected.');
       } else {
-        toast.error('Invalid credentials. Use admin@parksmart.edu');
+        toast.error('Account not found. Check your email.');
       }
     }
   };
@@ -38,8 +48,8 @@ export const Login = () => {
           <div className="w-12 h-12 rounded-xl bg-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
             <MapPin className="w-7 h-7 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Admin Portal</h2>
-          <p className="text-slate-400 mt-2">Sign in to ParkSmart</p>
+          <h2 className="text-2xl font-bold text-white">ParkSmart</h2>
+          <p className="text-slate-400 mt-2">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,7 +65,7 @@ export const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="glass-input w-full pl-10 pr-4"
-                placeholder="admin@parksmart.edu" />
+                placeholder="your@email.edu" />
             </div>
           </div>
           <div>
@@ -79,9 +89,11 @@ export const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-400">
-          <p className="font-semibold text-slate-300 mb-1">Demo Account:</p>
-          <p>admin@parksmart.edu (any password)</p>
+        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-400 space-y-1">
+          <p className="font-semibold text-slate-300 mb-2">Demo Accounts (any password):</p>
+          <p>Admin: admin@parksmart.edu</p>
+          <p>User: jane.doe@parksmart.edu</p>
+          <p>Security: security@parksmart.edu</p>
         </div>
       </GlassCard>
     </div>

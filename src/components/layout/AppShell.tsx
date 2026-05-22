@@ -42,36 +42,24 @@ export const AppShell: React.FC<{
     switch (user.role) {
       case 'ADMIN':
         return [
-        {
-          label: 'Dashboard',
-          path: '/admin',
-          icon: <LayoutDashboard className="w-5 h-5" />
-        },
-        {
-          label: 'Users',
-          path: '/admin/users',
-          icon: <Users className="w-5 h-5" />
-        },
-        {
-          label: 'Zones & Slots',
-          path: '/admin/zones',
-          icon: <MapPin className="w-5 h-5" />
-        },
-        {
-          label: 'Permits',
-          path: '/admin/permits',
-          icon: <ShieldCheck className="w-5 h-5" />
-        },
-        {
-          label: 'Parking Activity',
-          path: '/admin/logs',
-          icon: <FileText className="w-5 h-5" />
-        },
-        {
-          label: 'Reports & Stats',
-          path: '/admin/analytics',
-          icon: <BarChart3 className="w-5 h-5" />
-        }];
+        { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'Users', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
+        { label: 'Zones & Slots', path: '/admin/zones', icon: <MapPin className="w-5 h-5" /> },
+        { label: 'Permits', path: '/admin/permits', icon: <ShieldCheck className="w-5 h-5" /> },
+        { label: 'Parking Activity', path: '/admin/logs', icon: <FileText className="w-5 h-5" /> },
+        { label: 'Reports & Stats', path: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> }];
+
+      case 'USER':
+        return [
+        { label: 'Dashboard', path: '/user', icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'Parking Map', path: '/user/map', icon: <Map className="w-5 h-5" /> },
+        { label: 'My Permit', path: '/user/permit', icon: <CreditCard className="w-5 h-5" /> }];
+
+      case 'SECURITY':
+        return [
+        { label: 'Dashboard', path: '/security', icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'Verify Permit', path: '/security/verify', icon: <ShieldCheck className="w-5 h-5" /> },
+        { label: 'Activity Log', path: '/security/logs', icon: <FileText className="w-5 h-5" /> }];
 
       default:
         return [];
